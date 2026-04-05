@@ -16,4 +16,4 @@ async function enviarMensagem() {
 
 setInterval(() => {
   enviarMensagem();
-}, 5000;
+}, 5000); // 👈 TEM QUE TER ESSE )
