@@ -1,18 +1,36 @@
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const TOKEN = "8793955195:AAHbEl-PcFo-vlYFDlGRm_GF9SI3q_xHGCI";
+const TOKEN = "COLE_SEU_TOKEN_AQUI";
 
-async function descobrirChatID() {
+async function responder() {
     try {
-        const resposta = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates?offset=-1`);
-        const dados = await resposta.json();
+        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates`);
+        const data = await res.json();
 
-        console.log("RESPOSTA FINAL:");
-        console.log(JSON.stringify(dados, null, 2));
-    } catch (erro) {
-        console.log("ERRO:", erro);
+        if (!data.result.length) {
+            console.log("Nenhuma mensagem ainda...");
+            return;
+        }
+
+        const chat_id = data.result[data.result.length - 1].message.chat.id;
+
+        await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chat_id: chat_id,
+                text: "🔥 AGORA FUNCIONOU! Seu bot está ativo!"
+            })
+        });
+
+        console.log("✅ Mensagem enviada para:", chat_id);
+
+    } catch (err) {
+        console.log("❌ Erro:", err);
     }
 }
 
-descobrirChatID();
+setInterval(responder, 10000);
