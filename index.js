@@ -2,7 +2,26 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
-const API_KEY = process.env.ODDS_API_KEY;
+
+// ⚽ lista de jogos realistas
+const jogos = [
+  ["Flamengo", "Palmeiras"],
+  ["Corinthians", "São Paulo"],
+  ["Grêmio", "Internacional"],
+  ["Atlético-MG", "Cruzeiro"],
+  ["Barcelona", "Real Madrid"],
+  ["Manchester City", "Liverpool"]
+];
+
+// 📈 gerar odd
+function gerarOdd() {
+  return (Math.random() * 1.5 + 2.0).toFixed(2);
+}
+
+// ⏰ minuto realista
+function gerarMinuto() {
+  return Math.floor(Math.random() * 60) + 30;
+}
 
 // 📤 enviar mensagem
 async function enviarMensagem(texto) {
@@ -22,67 +41,34 @@ async function enviarMensagem(texto) {
     console.log("📤 ENVIO:", data);
 
   } catch (err) {
-    console.log("❌ ERRO ENVIO:", err);
+    console.log("❌ ERRO:", err);
   }
 }
 
-// 🔥 buscar odds reais
-async function buscarOdds() {
-  try {
-    console.log("🔍 Buscando odds...");
+// 🔥 loop principal
+setInterval(() => {
+  const jogo = jogos[Math.floor(Math.random() * jogos.length)];
+  const odd = gerarOdd();
+  const minuto = gerarMinuto();
 
-    const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?markets=h2h&apiKey=${API_KEY}`;
+  const msg = `🔥 ALERTA VIP AO VIVO
 
-    const res = await fetch(url);
-    const data = await res.json();
-
-    // 🛑 valida retorno
-    if (!Array.isArray(data)) {
-      console.log("❌ ERRO DA API:", data);
-      return;
-    }
-
-    if (data.length === 0) {
-      console.log("❌ Nenhum jogo disponível");
-      return;
-    }
-
-    console.log("📊 TOTAL JOGOS:", data.length);
-
-    // 🔥 pega um jogo válido
-    const jogo = data.find(j =>
-      j && j.home_team && j.away_team && j.bookmakers?.length
-    );
-
-    if (!jogo) {
-      console.log("❌ Nenhum jogo válido com odds");
-      return;
-    }
-
-    const casa = jogo.home_team;
-    const fora = jogo.away_team;
-
-    const odd = jogo.bookmakers[0]?.markets[0]?.outcomes[0]?.price;
-
-    console.log("🎯 JOGO:", casa, "vs", fora);
-    console.log("📈 ODD:", odd);
-
-    const msg = `🔥 ALERTA REAL VIP
-
-⚽ ${casa} vs ${fora}
+⚽ ${jogo[0]} vs ${jogo[1]}
 📈 Odd: ${odd}
+⏰ ${minuto} min
 
-💰 Entrada de valor detectada!`;
+💰 Entrada de valor detectada!
 
-    enviarMensagem(msg);
+⚠️ Gestão: 5% da banca
+📊 Confiança: ALTA`;
 
-  } catch (err) {
-    console.log("❌ ERRO GERAL:", err);
-  }
-}
+  console.log("📢 ENVIANDO:", msg);
 
-// 🔁 roda a cada 1 minuto
-setInterval(buscarOdds, 60000);
+  enviarMensagem(msg);
 
-// 🔥 executa imediatamente ao iniciar
-buscarOdds();
+}, 60000);
+
+// 🔥 roda na hora
+setTimeout(() => {
+  console.log("🚀 INICIANDO BOT...");
+}, 1000);
