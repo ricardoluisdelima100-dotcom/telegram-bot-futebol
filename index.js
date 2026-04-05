@@ -1,14 +1,9 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const TOKEN = "SEU_TOKEN";
-const CHAT_ID = "SEU_CHAT_ID";
+const TOKEN = "
+8793955195:AAEdaFBHplh4LR9102R1yK3BSd2oywiSxrQ";
+const CHAT_ID = " 5167844978";
 
-// 🔢 FUNÇÃO QUE FALTAVA
-function gerarOdd() {
-  return (Math.random() * 3 + 1).toFixed(2);
-}
-
-// 📤 ENVIAR MENSAGEM
 async function enviarMensagem(texto) {
   await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
     method: "POST",
@@ -20,21 +15,11 @@ async function enviarMensagem(texto) {
   });
 }
 
-// 🔁 LOOP AUTOMÁTICO
+// 🔥 TESTE FORÇADO
 setInterval(() => {
-  const odd = gerarOdd();
+  const msg = `🔥 TESTE FUNCIONANDO
 
-  if (odd < 2.0) {
-    console.log("🚫 Odd baixa, ignorando...");
-    return;
-  }
-
-  const msg = `🔥 ALERTA TOP
-
-⚽ Time A vs Time B
-📈 Odd: ${odd}
-
-💰 Entrada de valor!`;
+Se você recebeu isso, deu certo!`;
 
   enviarMensagem(msg);
 }, 5000);
