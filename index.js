@@ -37,4 +37,4 @@ setInterval(() => {
 💰 Entrada de valor!`;
 
   enviarMensagem(msg);
-}, 60000);
+}, 5000);
