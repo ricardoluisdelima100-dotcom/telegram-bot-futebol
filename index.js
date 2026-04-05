@@ -1,15 +1,30 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.ID_DO_CHAT;
+
+async function enviarMensagem() {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: "🔥 TESTE FORÇADO - TEM QUE CHEGAR"
+      })
+    });
+
+    const data = await res.json();
+    console.log("RESPOSTA:", data);
+
+  } catch (err) {
+    console.log("ERRO:", err);
+  }
+}
+
 setInterval(() => {
-
-  const jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  const odd = gerarOdd();
-  const minuto = gerarMinuto();
-
-  const msg = `🔥 TESTE
-
-⚽ ${jogo[0]} vs ${jogo[1]}
-📈 Odd: ${odd}
-⏰ ${minuto} min`;
-
-  enviarMensagem(msg);
-
+  console.log("⏰ ENVIANDO...");
+  enviarMensagem();
 }, 5000);
