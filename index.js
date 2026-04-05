@@ -5,34 +5,7 @@ const TOKEN = "Token for the bot Bot Odds Pro @odds_futebol_bot has been revoked
 
 8793955195:AAHbEl-PcFo-vlYFDlGRm_GF9SI3q_xHGCI";
 
-async function responder() {
-    try {
-        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates`);
-        const data = await res.json();
-
-        if (!data.result.length) {
-            console.log("Nenhuma mensagem ainda...");
-            return;
-        }
-
-        const chat_id = data.result[data.result.length - 1].message.chat.id;
-
-        await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                chat_id: chat_id,
-                text: "🔥 AGORA FUNCIONOU! Seu bot está ativo!"
-            })
-        });
-
-        console.log("✅ Mensagem enviada para:", chat_id);
-
-    } catch (err) {
-        console.log("❌ Erro:", err);
-    }
-}
-
-setInterval(responder, 10000);
+fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=SEU_CHAT_ID_AQUI&text=teste`)
+  .then(res => res.json())
+  .then(data => console.log(data))
+  .catch(err => console.log(err));
