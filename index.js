@@ -1,30 +1,15 @@
 setInterval(() => {
-  if (!dentroDoHorario()) return;
 
   const jogo = jogos[Math.floor(Math.random() * jogos.length)];
   const odd = gerarOdd();
   const minuto = gerarMinuto();
 
-  if (odd < 2.2) return;
-
-  const confianca = gerarConfianca(odd);
-  const gestao = gerarGestao(odd);
-
-  const msg = `🔥 ALERTA VIP AO VIVO
+  const msg = `🔥 TESTE
 
 ⚽ ${jogo[0]} vs ${jogo[1]}
 📈 Odd: ${odd}
-⏰ ${minuto} min
+⏰ ${minuto} min`;
 
-💰 Entrada de valor detectada!
+  enviarMensagem(msg);
 
-📊 Confiança: ${confianca}
-⚠️ Gestão: ${gestao}
-
-🚨 ENTRE AGORA!`;
-
-  if (podeEnviar(msg)) {
-    enviarMensagem(msg);
-  }
-
-}, 60000);
+}, 5000);
