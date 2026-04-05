@@ -2,6 +2,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
+const API_KEY = process.env.ODDS_API_KEY;
 
 // 📤 enviar mensagem
 async function enviarMensagem(texto) {
@@ -15,41 +16,37 @@ async function enviarMensagem(texto) {
   });
 }
 
-// 📈 gerar odd inteligente
-function gerarOdd() {
-  return (Math.random() * 1.5 + 1.9).toFixed(2);
-}
-
-// 🔥 buscar jogos futuros BR
-async function buscarJogos() {
+// 🔥 buscar odds reais
+async function buscarOdds() {
   try {
-    console.log("🔍 Buscando jogos brasileiros...");
+    console.log("🔍 Buscando odds reais...");
 
-    const res = await fetch("https://www.openligadb.de/api/getmatchdata/bl1");
+    const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?regions=br&markets=h2h&apiKey=${API_KEY}`;
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if (!data || data.length === 0) {
-      console.log("❌ Sem jogos");
+      console.log("❌ Sem jogos disponíveis");
       return;
     }
 
     const jogo = data[Math.floor(Math.random() * data.length)];
 
-    const casa = jogo.team1.teamName;
-    const fora = jogo.team2.teamName;
-    const dataJogo = jogo.matchDateTime;
+    const casa = jogo.home_team;
+    const fora = jogo.away_team;
 
-    const odd = gerarOdd();
+    // pega odd da primeira casa
+    const odd = jogo.bookmakers?.[0]?.markets?.[0]?.outcomes?.[0]?.price;
 
-    if (odd < 2.1) return;
+    if (!odd || odd < 2.0) return;
 
-    const msg = `🔥 ALERTA PRÉ-JOGO
+    const msg = `🔥 ALERTA REAL VIP
 
 ⚽ ${casa} vs ${fora}
-📅 ${new Date(dataJogo).toLocaleString()}
 📈 Odd: ${odd}
 
-💰 Entrada antecipada de valor!`;
+💰 Entrada de valor REAL detectada!`;
 
     enviarMensagem(msg);
 
@@ -58,5 +55,5 @@ async function buscarJogos() {
   }
 }
 
-// 🔁 rodar automático
-setInterval(buscarJogos, 60000);
+// 🔁 roda automático
+setInterval(buscarOdds, 60000);
