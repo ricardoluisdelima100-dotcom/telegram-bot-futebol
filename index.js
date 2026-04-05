@@ -1,16 +1,17 @@
-function gerarOdd() {
-  return (Math.random() * 3 + 1).toFixed(2);
-}
-
 setInterval(() => {
   const odd = gerarOdd();
 
-  const msg = `🔥 ALERTA DE ODDS
+  if (odd < 2.0) {
+    console.log("🚫 Odd baixa, ignorando...");
+    return;
+  }
+
+  const msg = `🔥 ALERTA TOP
 
 ⚽ Time A vs Time B
 📈 Odd: ${odd}
 
-🚀 Oportunidade detectada!`;
+💰 Entrada de valor!`;
 
   enviarMensagem(msg);
 }, 60000);
