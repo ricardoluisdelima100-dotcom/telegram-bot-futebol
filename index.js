@@ -1,13 +1,26 @@
-
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const TOKEN = "Token for the bot Bot Odds Pro @odds_futebol_bot has been revoked. New token is:
-
-8793955195:AAFr4qfUsciWx72lKEKA7GK1KgRPg4b-Noc
-";
+const TOKEN = "8793955195:AAEQuj7wJ6BZaoBoKFQLL-m-JqO_LnrNpcg";
 const CHAT_ID = "5167844978";
 
-fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=🔥 TESTE FUNCIONANDO`)
-  .then(res => res.json())
-  .then(data => console.log(data))
-  .catch(err => console.log(err));
+async function enviar() {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: "🔥 AGORA VAI! TESTE OK"
+      })
+    });
+
+    const data = await res.json();
+    console.log(data);
+  } catch (err) {
+    console.log("ERRO:", err);
+  }
+}
+
+enviar();
