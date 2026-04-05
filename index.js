@@ -1,3 +1,32 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.ID_DO_CHAT;
+const API_KEY = process.env.ODDS_API_KEY;
+
+// 📤 enviar mensagem
+async function enviarMensagem(texto) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: texto
+      })
+    });
+
+    const data = await res.json();
+    console.log("📤 ENVIO:", data);
+
+  } catch (err) {
+    console.log("❌ ERRO ENVIO:", err);
+  }
+}
+
+// 🔥 buscar odds reais
 async function buscarOdds() {
   try {
     console.log("🔍 Buscando odds...");
@@ -51,3 +80,9 @@ async function buscarOdds() {
     console.log("❌ ERRO GERAL:", err);
   }
 }
+
+// 🔁 roda a cada 1 minuto
+setInterval(buscarOdds, 60000);
+
+// 🔥 executa imediatamente ao iniciar
+buscarOdds();
