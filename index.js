@@ -53,4 +53,4 @@ setInterval(() => {
 
   enviarMensagem(msg);
 
-}, 5000);
+}, 60000);
