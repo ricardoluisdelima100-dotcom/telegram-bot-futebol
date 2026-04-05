@@ -1,7 +1,8 @@
 
   const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const TOKEN = "COLE_SEU_TOKEN_NOVO_AQUI";
+const TOKEN = "
+8617153532:AAGNAhmffTzbdoBw2sIkZ4fLI6No_ZKmHUo";
 
 async function descobrirChatID() {
     const resposta = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates`);
