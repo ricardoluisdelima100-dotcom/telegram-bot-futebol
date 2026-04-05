@@ -2,35 +2,38 @@ async function buscarOdds() {
   try {
     console.log("🔍 Buscando odds...");
 
-    const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?regions=br&markets=h2h&apiKey=${API_KEY}`;
+    const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?markets=h2h&apiKey=${API_KEY}`;
 
     const res = await fetch(url);
     const data = await res.json();
 
-    // 🛑 verifica se veio erro da API
+    // 🛑 valida retorno
     if (!Array.isArray(data)) {
       console.log("❌ ERRO DA API:", data);
       return;
     }
 
-    console.log("📊 TOTAL JOGOS:", data.length);
-
     if (data.length === 0) {
-      console.log("❌ Sem jogos disponíveis");
+      console.log("❌ Nenhum jogo disponível");
       return;
     }
 
-    const jogo = data[Math.floor(Math.random() * data.length)];
+    console.log("📊 TOTAL JOGOS:", data.length);
+
+    // 🔥 pega um jogo válido
+    const jogo = data.find(j =>
+      j && j.home_team && j.away_team && j.bookmakers?.length
+    );
+
+    if (!jogo) {
+      console.log("❌ Nenhum jogo válido com odds");
+      return;
+    }
 
     const casa = jogo.home_team;
     const fora = jogo.away_team;
 
-    let odd = jogo.bookmakers?.[0]?.markets?.[0]?.outcomes?.[0]?.price;
-
-    if (!odd) {
-      odd = (Math.random() * 2 + 2).toFixed(2);
-      console.log("⚠️ Odd simulada");
-    }
+    const odd = jogo.bookmakers[0]?.markets[0]?.outcomes[0]?.price;
 
     console.log("🎯 JOGO:", casa, "vs", fora);
     console.log("📈 ODD:", odd);
