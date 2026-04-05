@@ -1,7 +1,7 @@
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const TOKEN = "SEU_TOKEN";
+const TOKEN = "8793955195:AAHbEl-PcFo-vlYFDlGRm_GF9SI3q_xHGCI";
 
 async function descobrirChatID() {
     try {
