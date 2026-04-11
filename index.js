@@ -16,7 +16,7 @@ const jogos = [
 // 👤 jogadores fictícios
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// 🎯 gerar bilhete
+// 🎯 gerar bilhete VIP
 function gerarBilhete(jogo) {
   const oddTotal = (Math.random() * 3 + 3).toFixed(2);
 
@@ -62,53 +62,7 @@ function gerarBilhete(jogo) {
 💰💸 ENTRADA: ${gestao} da banca  
 📊🧠 CONFIANÇA: ${confianca}
 
-🚨⏳ CORRE! ESSA ODD VAI CAIR  
-🔥💣 ENTRE AGORA E BUSQUE O GREEN 🟢🏆`;
-}
-
-// 🟢 mensagem de green
-function gerarGreen() {
-  return `🟢💰 GREEN CONFIRMADO!
-
-🔥 Última entrada bateu com sucesso!
-
-📈 Seguimos lucrando no método
-
-🚀 Quem está no VIP está ganhando!`;
-}
-
-// 🚨 urgência
-function gerarUrgencia() {
-  return `🚨 ATENÇÃO!
-
-🔥 Estamos com entradas AO VIVO
-
-💰 Mercado se movimentando rápido
-
-⏳ Entre agora antes que feche!`;
-}
-
-// 💸 venda
-function gerarVenda() {
-  return `💰 VAGAS VIP ABERTAS
-
-🔥 Entradas todos os dias
-📊 Alta taxa de acerto
-
-🚀 Entre agora e não fique de fora!`;
-}
-
-// 🔀 alternar mensagens
-function gerarMensagemAleatoria(jogo) {
-  const tipos = [
-    () => gerarBilhete(jogo),
-    () => gerarGreen(),
-    () => gerarUrgencia(),
-    () => gerarVenda()
-  ];
-
-  const escolha = tipos[Math.floor(Math.random() * tipos.length)];
-  return escolha();
+🚨⏳ ENTRE AGORA!`;
 }
 
 // 📤 envio
@@ -131,15 +85,15 @@ async function enviarMensagem(texto) {
   }
 }
 
-// 🔁 LOOP A CADA 1 MINUTO
+// 🔁 ENVIO A CADA 1 MINUTO (SÓ BILHETES)
 setInterval(() => {
   const jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  const msg = gerarMensagemAleatoria(jogo);
+  const msg = gerarBilhete(jogo);
 
-  console.log("📢 ENVIANDO...");
+  console.log("📢 ENVIANDO BILHETE...");
   enviarMensagem(msg);
 
 }, 60000);
 
 // 🚀 inicia
-console.log("🤖 BOT VIP COMPLETO ATIVO");
+console.log("🤖 BOT VIP (SÓ BILHETES) ATIVO");
