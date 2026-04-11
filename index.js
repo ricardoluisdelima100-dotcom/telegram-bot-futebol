@@ -13,10 +13,10 @@ const jogos = [
   ["Manchester City", "Liverpool"]
 ];
 
-// 👤 jogadores fictícios
+// 👤 jogadores
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// 🕒 horário futuro
+// 🕒 horário
 function gerarHorario() {
   const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
   return horas[Math.floor(Math.random() * horas.length)];
@@ -24,91 +24,87 @@ function gerarHorario() {
 
 // 📅 dia
 function gerarData() {
-  const dias = ["Hoje", "Amanhã"];
-  return dias[Math.floor(Math.random() * dias.length)];
+  return Math.random() > 0.5 ? "Hoje" : "Amanhã";
 }
 
-// 🎯 gerar bilhete completo
-function gerarBilhete(jogo) {
-  const oddTotal = (Math.random() * 3 + 3).toFixed(2);
-
-  const chutesCasa = (Math.random() * 3 + 8).toFixed(1);
-  const chutesFora = (Math.random() * 3 + 7).toFixed(1);
-
-  const escanteiosCasa = (Math.random() * 3 + 4).toFixed(0);
-  const escanteiosFora = (Math.random() * 3 + 4).toFixed(0);
-
-  const cartoesTotal = (Math.random() * 3 + 4).toFixed(0);
-
+// 🎯 gerar dados de um jogo
+function gerarJogo(jogo) {
+  const chutes = (Math.random() * 3 + 8).toFixed(1);
+  const escanteios = (Math.random() * 3 + 4).toFixed(0);
+  const cartoes = (Math.random() * 3 + 4).toFixed(0);
   const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
 
-  const gestao = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
-  const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
+  return `
+⚽ ${jogo[0]} 🆚 ${jogo[1]}
 
+📊 CHUTES:
+➡️ ${jogo[0]} +${chutes}
+➡️ ${jogo[1]} +${chutes}
+
+📊 ESCANTEIOS:
+➡️ ${jogo[0]} +${escanteios}
+➡️ ${jogo[1]} +${escanteios}
+
+📊 CARTÕES:
+➡️ Mais de ${cartoes}
+➡️ Ambas recebem cartão
+🟨 ${jogador} leva cartão
+`;
+}
+
+// 🎯 bilhete com 2 jogos
+function gerarBilhete() {
+  const jogo1 = jogos[Math.floor(Math.random() * jogos.length)];
+  const jogo2 = jogos[Math.floor(Math.random() * jogos.length)];
+
+  const oddTotal = (Math.random() * 5 + 4).toFixed(2);
   const horario = gerarHorario();
   const data = gerarData();
 
-  return `🚨💣🔥 BILHETE VIP PRÉ-JOGO 🔥💣🚨
+  return `🚨💣🔥 BILHETE VIP DUPLO 🔥💣🚨
 
-💰💸 OPORTUNIDADE IDENTIFICADA 💸💰
+💰💸 ENTRADA DE VALOR IDENTIFICADA 💸💰
 
-🎯📊 ODD TOTAL: ${oddTotal} 🚀
+🎯 ODD TOTAL: ${oddTotal} 🚀
 
-━━━━━━━━━━━━━━━━━━
-
-⚽ ${jogo[0]} 🆚 ${jogo[1]}  
 📅 ${data} às ${horario}  
 ⏱️ TEMPO REGULAMENTAR (90 MIN)
 
-📊🎯 CHUTES:
-🔥 ${jogo[0]} ➕${chutesCasa} chutes  
-⚠️ ${jogo[1]} ➕${chutesFora} chutes  
+━━━━━━━━━━━━━━━━━━
 
-📊🥅 ESCANTEIOS:
-🚀 ${jogo[0]} ➕${escanteiosCasa} escanteios  
-⚡ ${jogo[1]} ➕${escanteiosFora} escanteios  
-
-📊🟨 CARTÕES:
-🔥 Mais de ${cartoesTotal} cartões no jogo  
-⚠️ Ambas equipes recebem cartão  
-🟨 ${jogador} para receber cartão  
+${gerarJogo(jogo1)}
 
 ━━━━━━━━━━━━━━━━━━
 
-💰💸 ENTRADA: ${gestao} da banca  
-📊🧠 CONFIANÇA: ${confianca}
+${gerarJogo(jogo2)}
+
+━━━━━━━━━━━━━━━━━━
+
+💰 Entrada: ${["3%", "4%", "5%"][Math.floor(Math.random() * 3)]}
+📊 Confiança: ${["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)]}
 
 ⏳ Entrada antecipada — odds podem baixar!`;
 }
 
 // 📤 envio
 async function enviarMensagem(texto) {
-  try {
-    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: texto
-      })
-    });
+  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: texto
+    })
+  });
 
-    console.log("📤 ENVIADO");
-
-  } catch (err) {
-    console.log("❌ ERRO:", err);
-  }
+  console.log("📤 ENVIADO");
 }
 
-// 🔁 envio a cada 1 minuto
+// 🔁 LOOP (1 minuto)
 setInterval(() => {
-  const jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  const msg = gerarBilhete(jogo);
-
-  console.log("📢 ENVIANDO BILHETE PRÉ-JOGO...");
-  enviarMensagem(msg);
-
+  console.log("📢 ENVIANDO BILHETE...");
+  enviarMensagem(gerarBilhete());
 }, 60000);
 
-// 🚀 iniciar
-console.log("🤖 BOT PRÉ-JOGO (JOGO TODO) ATIVO");
+// 🚀 start
+console.log("🤖 BOT VIP SEM GREEN ATIVO");
