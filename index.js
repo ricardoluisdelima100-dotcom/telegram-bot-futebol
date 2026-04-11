@@ -16,41 +16,57 @@ const jogos = [
 // 👤 jogadores fictícios
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// 🎯 gerar bilhete VIP
+// 🕒 horário futuro
+function gerarHorario() {
+  const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
+  return horas[Math.floor(Math.random() * horas.length)];
+}
+
+// 📅 dia
+function gerarData() {
+  const dias = ["Hoje", "Amanhã"];
+  return dias[Math.floor(Math.random() * dias.length)];
+}
+
+// 🎯 gerar bilhete completo
 function gerarBilhete(jogo) {
   const oddTotal = (Math.random() * 3 + 3).toFixed(2);
 
-  const chutesCasa = (Math.random() * 3 + 5).toFixed(1);
-  const chutesFora = (Math.random() * 3 + 6).toFixed(1);
+  const chutesCasa = (Math.random() * 3 + 8).toFixed(1);
+  const chutesFora = (Math.random() * 3 + 7).toFixed(1);
 
-  const escanteiosCasa = (Math.random() * 2 + 2).toFixed(0);
-  const escanteiosFora = (Math.random() * 2 + 3).toFixed(0);
+  const escanteiosCasa = (Math.random() * 3 + 4).toFixed(0);
+  const escanteiosFora = (Math.random() * 3 + 4).toFixed(0);
 
-  const cartoesTotal = (Math.random() * 3 + 3).toFixed(0);
+  const cartoesTotal = (Math.random() * 3 + 4).toFixed(0);
 
   const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
 
   const gestao = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
   const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
 
-  return `🚨💣🔥 BILHETE VIP EXPLOSIVO 🔥💣🚨
+  const horario = gerarHorario();
+  const data = gerarData();
 
-💰💸 OPORTUNIDADE DE OURO IDENTIFICADA 💸💰
+  return `🚨💣🔥 BILHETE VIP PRÉ-JOGO 🔥💣🚨
+
+💰💸 OPORTUNIDADE IDENTIFICADA 💸💰
 
 🎯📊 ODD TOTAL: ${oddTotal} 🚀
 
 ━━━━━━━━━━━━━━━━━━
 
 ⚽ ${jogo[0]} 🆚 ${jogo[1]}  
-⏰⏳ 1º TEMPO — AO VIVO
+📅 ${data} às ${horario}  
+⏱️ TEMPO REGULAMENTAR (90 MIN)
 
 📊🎯 CHUTES:
 🔥 ${jogo[0]} ➕${chutesCasa} chutes  
-⚠️ ${jogo[1]} ➖${chutesFora} chutes  
+⚠️ ${jogo[1]} ➕${chutesFora} chutes  
 
 📊🥅 ESCANTEIOS:
 🚀 ${jogo[0]} ➕${escanteiosCasa} escanteios  
-⚡ ${jogo[1]} ➖${escanteiosFora} escanteios  
+⚡ ${jogo[1]} ➕${escanteiosFora} escanteios  
 
 📊🟨 CARTÕES:
 🔥 Mais de ${cartoesTotal} cartões no jogo  
@@ -62,13 +78,13 @@ function gerarBilhete(jogo) {
 💰💸 ENTRADA: ${gestao} da banca  
 📊🧠 CONFIANÇA: ${confianca}
 
-🚨⏳ ENTRE AGORA!`;
+⏳ Entrada antecipada — odds podem baixar!`;
 }
 
 // 📤 envio
 async function enviarMensagem(texto) {
   try {
-    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -77,23 +93,22 @@ async function enviarMensagem(texto) {
       })
     });
 
-    const data = await res.json();
-    console.log("📤 ENVIO:", data);
+    console.log("📤 ENVIADO");
 
   } catch (err) {
     console.log("❌ ERRO:", err);
   }
 }
 
-// 🔁 ENVIO A CADA 1 MINUTO (SÓ BILHETES)
+// 🔁 envio a cada 1 minuto
 setInterval(() => {
   const jogo = jogos[Math.floor(Math.random() * jogos.length)];
   const msg = gerarBilhete(jogo);
 
-  console.log("📢 ENVIANDO BILHETE...");
+  console.log("📢 ENVIANDO BILHETE PRÉ-JOGO...");
   enviarMensagem(msg);
 
 }, 60000);
 
-// 🚀 inicia
-console.log("🤖 BOT VIP (SÓ BILHETES) ATIVO");
+// 🚀 iniciar
+console.log("🤖 BOT PRÉ-JOGO (JOGO TODO) ATIVO");
