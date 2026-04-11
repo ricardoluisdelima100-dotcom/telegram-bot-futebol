@@ -3,24 +3,54 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// ⚽ lista de jogos realistas
+// ⚽ jogos
 const jogos = [
   ["Flamengo", "Palmeiras"],
   ["Corinthians", "São Paulo"],
   ["Grêmio", "Internacional"],
   ["Atlético-MG", "Cruzeiro"],
   ["Barcelona", "Real Madrid"],
-  ["Manchester City", "Liverpool"]
+  ["Manchester City", "Liverpool"],
+  ["Platense", "Corinthians"],
+  ["Rosario Central", "Independiente del Valle"]
 ];
 
-// 📈 gerar odd
-function gerarOdd() {
-  return (Math.random() * 1.5 + 2.0).toFixed(2);
-}
+// 🎯 gerar bilhete completo
+function gerarBilhete(jogo) {
+  const oddTotal = (Math.random() * 3 + 3).toFixed(2);
 
-// ⏰ minuto realista
-function gerarMinuto() {
-  return Math.floor(Math.random() * 60) + 30;
+  const chutesCasa = (Math.random() * 3 + 5).toFixed(1);
+  const chutesFora = (Math.random() * 3 + 6).toFixed(1);
+
+  const escanteiosCasa = (Math.random() * 2 + 2).toFixed(0);
+  const escanteiosFora = (Math.random() * 2 + 3).toFixed(0);
+
+  const gestao = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
+  const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
+
+  return `🔥 BILHETE VIP LIBERADO
+
+🎯 Odd Total: ${oddTotal}
+
+━━━━━━━━━━━━━━━
+
+⚽ ${jogo[0]} x ${jogo[1]}
+⏰ 1º Tempo
+
+📊 CHUTES:
+➡️ ${jogo[0]} +${chutesCasa} chutes
+➡️ ${jogo[1]} -${chutesFora} chutes
+
+📊 ESCANTEIOS:
+➡️ ${jogo[0]} +${escanteiosCasa} escanteios
+➡️ ${jogo[1]} -${escanteiosFora} escanteios
+
+━━━━━━━━━━━━━━━
+
+💰 Gestão: ${gestao} da banca
+📊 Confiança: ${confianca}
+
+🚨 Entrada de valor — entrar agora!`;
 }
 
 // 📤 enviar mensagem
@@ -45,30 +75,16 @@ async function enviarMensagem(texto) {
   }
 }
 
-// 🔥 loop principal
+// 🔁 loop automático
 setInterval(() => {
   const jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  const odd = gerarOdd();
-  const minuto = gerarMinuto();
 
-  const msg = `🔥 ALERTA VIP AO VIVO
+  const msg = gerarBilhete(jogo);
 
-⚽ ${jogo[0]} vs ${jogo[1]}
-📈 Odd: ${odd}
-⏰ ${minuto} min
-
-💰 Entrada de valor detectada!
-
-⚠️ Gestão: 5% da banca
-📊 Confiança: ALTA`;
-
-  console.log("📢 ENVIANDO:", msg);
-
+  console.log("📢 ENVIANDO BILHETE...");
   enviarMensagem(msg);
 
 }, 60000);
 
-// 🔥 roda na hora
-setTimeout(() => {
-  console.log("🚀 INICIANDO BOT...");
-}, 1000);
+// 🚀 inicia
+console.log("🤖 BOT VIP MULTIPLAS ATIVO");
