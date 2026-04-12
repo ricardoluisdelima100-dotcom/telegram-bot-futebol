@@ -16,26 +16,28 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA =================
-function getDataHoje() {
-  const hoje = new Date();
-  return hoje.toISOString().split("T")[0];
-}
-
 // ================= BUSCAR JOGOS DO BRASIL =================
 async function buscarJogosBrasil() {
   try {
-    const hoje = getDataHoje();
-
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${new Date().toISOString().split("T")[0]}`
     );
 
     if (!data.events) return [];
 
-    return data.events.filter(ev => {
-      return ev.tournament.category.name === "Brazil";
-    });
+    const agora = new Date();
+
+    return data.events
+      .filter(ev => {
+        // 🇧🇷 só Brasil
+        if (ev.tournament.category.name !== "Brazil") return false;
+
+        // ⏰ horário do jogo
+        const dataJogo = new Date(ev.startTimestamp * 1000);
+
+        // 🔥 só jogos que ainda vão acontecer
+        return dataJogo > agora;
+      });
 
   } catch (err) {
     console.log("Erro ao buscar jogos:", err.message);
@@ -48,18 +50,21 @@ function gerarPalpite(jogo) {
   const casa = jogo.homeTeam.name;
   const fora = jogo.awayTeam.name;
   const liga = jogo.tournament.name;
+  const horario = new Date(jogo.startTimestamp * 1000).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
   return `🇧🇷 ${liga}
 
 ⚽ ${casa} vs ${fora}
+🕒 ${horario}
 
 🎯 PALPITES:
 
 ⚽ Gols: Over 1.5
 🚩 Escanteios: Over 8.5
-🟨 Cartões: Over 3.5
-
-🔥 Entrada padrão para jogo equilibrado`;
+🟨 Cartões: Over 3.5`;
 }
 
 // ================= EXECUÇÃO =================
@@ -69,11 +74,10 @@ async function rodarBot() {
   const jogos = await buscarJogosBrasil();
 
   if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
+    await enviarMensagem("⚠️ Nenhum jogo futuro do Brasil hoje.");
     return;
   }
 
-  // envia só 3 jogos (evita spam)
   const selecionados = jogos.slice(0, 3);
 
   for (let jogo of selecionados) {
