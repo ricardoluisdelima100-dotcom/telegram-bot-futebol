@@ -16,72 +16,37 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA HOJE =================
-function getDataHoje() {
-  const hoje = new Date();
-  return hoje.toISOString().split("T")[0];
-}
-
-// ================= BUSCAR JOGOS REAIS =================
-async function buscarJogosBrasil() {
-  try {
-    const dataHoje = getDataHoje();
-
-    const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/events/${dataHoje}`
-    );
-
-    if (!data.events) return [];
-
-    return data.events.filter(ev => {
-      return ev.tournament.category.name === "Brazil";
-    });
-
-  } catch (err) {
-    console.log("Erro API:", err.message);
-    return [];
-  }
-}
+// ================= SUA BASE REAL (EDITA TODO DIA) =================
+const jogosHoje = [
+  "Atlético-MG vs Grêmio - 19:00",
+  "Fluminense vs Corinthians - 21:30",
+  "Sport vs Ceará - 18:00",
+  "Vila Nova vs Avaí - 20:00"
+];
 
 // ================= GERAR MENSAGEM =================
 function gerarMensagem(jogo) {
-  const casa = jogo.homeTeam.name;
-  const fora = jogo.awayTeam.name;
-  const liga = jogo.tournament.name;
+  return `🇧🇷 JOGO DO DIA
 
-  const hora = new Date(jogo.startTimestamp * 1000)
-    .toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  return `🇧🇷 ${liga}
-
-⚽ ${casa} vs ${fora}
-🕒 ${hora}
+⚽ ${jogo}
 
 🎯 PALPITES:
 
 ⚽ Over 1.5 gols
 🚩 Over 8.5 escanteios
-🟨 Over 3.5 cartões`;
+🟨 Over 3.5 cartões
+
+🔥 Boa oportunidade de entrada`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
-  console.log("BOT RODANDO");
+  console.log("BOT ATIVO");
 
-  const jogos = await buscarJogosBrasil();
-
-  if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
-    return;
-  }
-
-  for (let jogo of jogos.slice(0, 5)) {
+  for (let jogo of jogosHoje) {
     await enviarMensagem(gerarMensagem(jogo));
   }
 }
 
-setInterval(rodarBot, 60 * 60 * 1000);
+// roda 1x ao iniciar
 rodarBot();
