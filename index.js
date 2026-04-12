@@ -4,8 +4,27 @@ import axios from "axios";
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// IDs DAS LIGAS 🇧🇷
-const LIGAS = [325, 390]; // Série A e Série B
+// ================= SUA BASE (EDITA TODO DIA) =================
+const jogosHoje = [
+  {
+    liga: "Brasileirão Série A",
+    casa: "Flamengo",
+    fora: "Palmeiras",
+    hora: "21:30"
+  },
+  {
+    liga: "Brasileirão Série A",
+    casa: "Atlético-MG",
+    fora: "Grêmio",
+    hora: "19:00"
+  },
+  {
+    liga: "Brasileirão Série B",
+    casa: "Sport",
+    fora: "Ceará",
+    hora: "18:00"
+  }
+];
 
 // ================= TELEGRAM =================
 async function enviarMensagem(texto) {
@@ -19,80 +38,41 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= BUSCAR JOGOS POR LIGA =================
-async function buscarJogosLiga(idLiga) {
-  try {
-    const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/unique-tournament/${idLiga}/events/round/1`
-    );
-
-    return data.events || [];
-  } catch (err) {
-    console.log("Erro liga:", err.message);
-    return [];
-  }
+// ================= ANÁLISE SIMPLES =================
+function gerarAnalise(jogo) {
+  return {
+    gols: "Over 1.5",
+    escanteios: "Over 8.5",
+    cartoes: "Over 3.5"
+  };
 }
 
-// ================= FILTRAR SÓ HOJE =================
-function filtrarHoje(jogos) {
-  const hoje = new Date();
+// ================= MONTAR MENSAGEM =================
+function montarMensagem(jogo) {
+  const analise = gerarAnalise(jogo);
 
-  return jogos.filter(ev => {
-    const dataJogo = new Date(ev.startTimestamp * 1000);
+  return `🇧🇷 ${jogo.liga}
 
-    return (
-      dataJogo.getDate() === hoje.getDate() &&
-      dataJogo.getMonth() === hoje.getMonth()
-    );
-  });
-}
-
-// ================= GERAR MENSAGEM =================
-function gerarMensagem(jogo) {
-  const casa = jogo.homeTeam.name;
-  const fora = jogo.awayTeam.name;
-
-  const hora = new Date(jogo.startTimestamp * 1000)
-    .toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  return `🇧🇷 ${casa} vs ${fora}
-🕒 ${hora}
+⚽ ${jogo.casa} vs ${jogo.fora}
+🕒 ${jogo.hora}
 
 🎯 PALPITES:
 
-⚽ Over 1.5 gols
-🚩 Over 8.5 escanteios
-🟨 Over 3.5 cartões`;
+⚽ Gols: ${analise.gols}
+🚩 Escanteios: ${analise.escanteios}
+🟨 Cartões: ${analise.cartoes}
+
+🔥 Entrada selecionada`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
-  console.log("BOT RODANDO");
+  console.log("BOT ATIVO");
 
-  let todosJogos = [];
-
-  for (let liga of LIGAS) {
-    const jogos = await buscarJogosLiga(liga);
-    todosJogos.push(...jogos);
-  }
-
-  const jogosHoje = filtrarHoje(todosJogos);
-
-  if (jogosHoje.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo do Brasileirão hoje.");
-    return;
-  }
-
-  for (let jogo of jogosHoje.slice(0, 5)) {
-    await enviarMensagem(gerarMensagem(jogo));
+  for (let jogo of jogosHoje) {
+    await enviarMensagem(montarMensagem(jogo));
   }
 }
-
-// roda a cada 1 hora
-setInterval(rodarBot, 60 * 60 * 1000);
 
 // roda ao iniciar
 rodarBot();
