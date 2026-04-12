@@ -16,28 +16,31 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= JOGOS REAIS (VOCÊ CONTROLA) =================
-const jogosHoje = [
-  {
-    liga: "Brasileirão Série A",
-    casa: "Flamengo",
-    fora: "Palmeiras",
-    hora: "21:30"
-  },
-  {
-    liga: "Brasileirão Série B",
-    casa: "Sport",
-    fora: "Ceará",
-    hora: "19:00"
+// ================= BUSCAR JOGOS REAIS =================
+async function buscarJogosBrasil() {
+  try {
+    const { data } = await axios.get(
+      "https://www.thesportsdb.com/api/v1/json/3/eventsday.php?s=Soccer&d=2026-04-12"
+    );
+
+    if (!data.events) return [];
+
+    return data.events.filter(ev => {
+      return ev.strLeague.includes("Brazil");
+    });
+
+  } catch (err) {
+    console.log("Erro API:", err.message);
+    return [];
   }
-];
+}
 
-// ================= GERAR PALPITE =================
+// ================= GERAR MENSAGEM =================
 function gerarMensagem(jogo) {
-  return `🇧🇷 ${jogo.liga}
+  return `🇧🇷 ${jogo.strLeague}
 
-⚽ ${jogo.casa} vs ${jogo.fora}
-🕒 ${jogo.hora}
+⚽ ${jogo.strHomeTeam} vs ${jogo.strAwayTeam}
+🕒 ${jogo.strTime}
 
 🎯 PALPITES:
 
@@ -50,10 +53,16 @@ function gerarMensagem(jogo) {
 async function rodarBot() {
   console.log("BOT ATIVO");
 
-  for (let jogo of jogosHoje) {
+  const jogos = await buscarJogosBrasil();
+
+  if (jogos.length === 0) {
+    await enviarMensagem("⚠️ Nenhum jogo do Brasil encontrado hoje.");
+    return;
+  }
+
+  for (let jogo of jogos.slice(0, 4)) {
     await enviarMensagem(gerarMensagem(jogo));
   }
 }
 
-// roda 1 vez por dia
 rodarBot();
