@@ -16,19 +16,24 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA =================
-function getTimestampHoje() {
+// ================= DATA CORRETA =================
+function getDataFormatada() {
   const hoje = new Date();
-  return Math.floor(hoje.getTime() / 1000);
+
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
 }
 
-// ================= BUSCAR JOGOS DO DIA (FUNCIONA MELHOR) =================
+// ================= BUSCAR JOGOS DO DIA (CORRETO) =================
 async function buscarJogosDoDia() {
   try {
-    const timestamp = getTimestampHoje();
+    const dataHoje = getDataFormatada();
 
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${timestamp}`
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${dataHoje}`
     );
 
     if (!data.events || data.events.length === 0) return [];
@@ -79,26 +84,24 @@ async function rodarBot() {
   console.log("BOT RODANDO...");
 
   const aoVivo = await buscarJogosAoVivo();
-  let doDia = await buscarJogosDoDia();
-
-  // fallback (nunca ficar vazio)
-  if (doDia.length === 0) {
-    doDia = [
-      "Flamengo vs Palmeiras",
-      "Barcelona vs Real Madrid"
-    ];
-  }
+  const doDia = await buscarJogosDoDia();
 
   // AO VIVO
   if (aoVivo.length > 0) {
     for (let jogo of aoVivo) {
       await enviarMensagem(gerarMensagem(jogo, "🔥 AO VIVO"));
     }
+  } else {
+    await enviarMensagem("⚠️ Nenhum jogo ao vivo agora.");
   }
 
   // DO DIA
-  for (let jogo of doDia) {
-    await enviarMensagem(gerarMensagem(jogo, "📅 JOGOS DO DIA"));
+  if (doDia.length > 0) {
+    for (let jogo of doDia) {
+      await enviarMensagem(gerarMensagem(jogo, "📅 JOGOS DE HOJE"));
+    }
+  } else {
+    await enviarMensagem("⚠️ Nenhum jogo encontrado para hoje.");
   }
 }
 
