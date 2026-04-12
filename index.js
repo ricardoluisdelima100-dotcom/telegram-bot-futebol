@@ -16,22 +16,35 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= BUSCAR JOGOS DO BRASIL =================
+// ================= VERIFICAR SE É HOJE =================
+function ehHoje(timestamp) {
+  const hoje = new Date();
+  const dataJogo = new Date(timestamp * 1000);
+
+  return (
+    dataJogo.getDate() === hoje.getDate() &&
+    dataJogo.getMonth() === hoje.getMonth() &&
+    dataJogo.getFullYear() === hoje.getFullYear()
+  );
+}
+
+// ================= BUSCAR JOGOS BRASIL (CORRETO) =================
 async function buscarJogosBrasil() {
   try {
-    const hoje = new Date().toISOString().split("T")[0];
-
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
+      "https://api.sofascore.com/api/v1/sport/football/events"
     );
 
     if (!data.events) return [];
 
     return data.events.filter(ev => {
-      // 🇧🇷 só Brasil
+      // 🇧🇷 Brasil
       if (ev.tournament.category.name !== "Brazil") return false;
 
-      // ❌ ignora jogo finalizado
+      // 📅 hoje
+      if (!ehHoje(ev.startTimestamp)) return false;
+
+      // ❌ não finalizado
       if (ev.status?.type === "finished") return false;
 
       return true;
@@ -78,7 +91,7 @@ async function rodarBot() {
     return;
   }
 
-  const selecionados = jogos.slice(0, 3);
+  const selecionados = jogos.slice(0, 4);
 
   for (let jogo of selecionados) {
     await enviarMensagem(gerarPalpite(jogo));
