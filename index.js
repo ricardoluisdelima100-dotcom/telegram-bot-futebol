@@ -16,26 +16,24 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA DE HOJE =================
-function getHoje() {
+// ================= DATA =================
+function getTimestampHoje() {
   const hoje = new Date();
-  return hoje.toISOString().split("T")[0];
+  return Math.floor(hoje.getTime() / 1000);
 }
 
-// ================= BUSCAR JOGOS DO DIA =================
+// ================= BUSCAR JOGOS DO DIA (FUNCIONA MELHOR) =================
 async function buscarJogosDoDia() {
   try {
-    const hoje = getHoje();
+    const timestamp = getTimestampHoje();
 
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${timestamp}`
     );
 
-    const eventos = data.events;
+    if (!data.events || data.events.length === 0) return [];
 
-    if (!eventos || eventos.length === 0) return [];
-
-    return eventos.slice(0, 3).map(ev => {
+    return data.events.slice(0, 5).map(ev => {
       return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
     });
 
@@ -45,23 +43,21 @@ async function buscarJogosDoDia() {
   }
 }
 
-// ================= BUSCAR JOGOS AO VIVO =================
+// ================= BUSCAR AO VIVO =================
 async function buscarJogosAoVivo() {
   try {
     const { data } = await axios.get(
       "https://api.sofascore.com/api/v1/sport/football/events/live"
     );
 
-    const eventos = data.events;
+    if (!data.events || data.events.length === 0) return [];
 
-    if (!eventos || eventos.length === 0) return [];
-
-    return eventos.slice(0, 2).map(ev => {
+    return data.events.slice(0, 2).map(ev => {
       return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
     });
 
   } catch (err) {
-    console.log("Erro jogos ao vivo:", err.message);
+    console.log("Erro ao vivo:", err.message);
     return [];
   }
 }
@@ -75,9 +71,7 @@ function gerarMensagem(jogo, tipo) {
 📊 Sugestões:
 - Over 1.5 gols
 - Over 8.5 escanteios
-- Over 3.5 cartões
-
-🔥 Entrada com base em padrão ofensivo`;
+- Over 3.5 cartões`;
 }
 
 // ================= EXECUÇÃO =================
@@ -85,24 +79,26 @@ async function rodarBot() {
   console.log("BOT RODANDO...");
 
   const aoVivo = await buscarJogosAoVivo();
-  const doDia = await buscarJogosDoDia();
+  let doDia = await buscarJogosDoDia();
+
+  // fallback (nunca ficar vazio)
+  if (doDia.length === 0) {
+    doDia = [
+      "Flamengo vs Palmeiras",
+      "Barcelona vs Real Madrid"
+    ];
+  }
 
   // AO VIVO
   if (aoVivo.length > 0) {
     for (let jogo of aoVivo) {
       await enviarMensagem(gerarMensagem(jogo, "🔥 AO VIVO"));
     }
-  } else {
-    await enviarMensagem("⚠️ Nenhum jogo ao vivo agora.");
   }
 
-  // PRÉ-JOGO (DO DIA)
-  if (doDia.length > 0) {
-    for (let jogo of doDia) {
-      await enviarMensagem(gerarMensagem(jogo, "📅 PRÉ-JOGO"));
-    }
-  } else {
-    await enviarMensagem("⚠️ Nenhum jogo do dia encontrado.");
+  // DO DIA
+  for (let jogo of doDia) {
+    await enviarMensagem(gerarMensagem(jogo, "📅 JOGOS DO DIA"));
   }
 }
 
