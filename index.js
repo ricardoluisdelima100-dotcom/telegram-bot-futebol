@@ -1,5 +1,5 @@
 import axios from "axios";
-import cheerio from "cheerio";
+import * as cheerio from "cheerio"; // CORRIGIDO AQUI
 
 // ================= CONFIG =================
 const TOKEN = process.env.TELEGRAM_TOKEN;
@@ -36,7 +36,7 @@ async function buscarJogosReais() {
       }
     });
 
-    return jogos.slice(0, 2); // pega 2 jogos
+    return jogos.slice(0, 2);
   } catch (err) {
     console.log("Erro ao buscar jogos:", err.message);
     return [];
