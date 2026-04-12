@@ -8,9 +8,9 @@ const CHAT_ID = process.env.ID_DO_CHAT;
 const jogosHoje = [
   {
     liga: "Brasileirão Série A",
-    casa: "Flamengo",
-    fora: "Palmeiras",
-    hora: "21:30"
+    casa: "Cruzeiro",
+    fora: "Red Bull Bragantino",
+    hora: "18:30"
   },
   {
     liga: "Brasileirão Série A",
