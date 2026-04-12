@@ -1,12 +1,9 @@
 {
   "name": "telegram-bot-futebol",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
+  "type": "module",
   "dependencies": {
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.0.0"
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0"
   }
 }
