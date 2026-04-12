@@ -3,55 +3,24 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// ⚽ jogos mais realistas
-const jogos = [
-  ["Flamengo", "Palmeiras"],
-  ["Corinthians", "São Paulo"],
-  ["Atlético-MG", "Fluminense"],
-  ["Grêmio", "Internacional"],
-  ["Botafogo", "Vasco"],
-  ["Cruzeiro", "Bahia"],
-  ["Barcelona", "Real Madrid"],
-  ["Manchester City", "Arsenal"],
-  ["Liverpool", "Chelsea"],
-  ["PSG", "Marseille"]
-];
-
 // 👤 jogadores fictícios
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// 🧠 controle de repetição
-let ultimoJogo1 = "";
-let ultimoJogo2 = "";
+// 📤 enviar mensagem
+async function enviarMensagem(texto) {
+  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: texto
+    })
+  });
 
-function escolherJogoUnico() {
-  let jogo;
-
-  do {
-    jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  } while (
-    jogo.join() === ultimoJogo1 ||
-    jogo.join() === ultimoJogo2
-  );
-
-  ultimoJogo2 = ultimoJogo1;
-  ultimoJogo1 = jogo.join();
-
-  return jogo;
+  console.log("📤 ENVIADO");
 }
 
-// 🕒 horário
-function gerarHorario() {
-  const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
-  return horas[Math.floor(Math.random() * horas.length)];
-}
-
-// 📅 data
-function gerarData() {
-  return Math.random() > 0.5 ? "Hoje" : "Amanhã";
-}
-
-// 🎯 gerar jogo realista
+// 🎯 gerar jogo com dados reais
 function gerarJogo(jogo) {
   const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
   const chutesFora = (Math.random() * 2 + 8).toFixed(1);
@@ -64,15 +33,15 @@ function gerarJogo(jogo) {
   const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
 
   return `
-⚽🔥 ${jogo[0]} 🆚 ${jogo[1]}
+⚽🔥 ${jogo.strHomeTeam} 🆚 ${jogo.strAwayTeam}
 
 📊 CHUTES:
-➡️ ${jogo[0]} +${chutesCasa}
-➡️ ${jogo[1]} +${chutesFora}
+➡️ ${jogo.strHomeTeam} +${chutesCasa}
+➡️ ${jogo.strAwayTeam} +${chutesFora}
 
 📊 ESCANTEIOS:
-➡️ ${jogo[0]} +${escanteiosCasa}
-➡️ ${jogo[1]} +${escanteiosFora}
+➡️ ${jogo.strHomeTeam} +${escanteiosCasa}
+➡️ ${jogo.strAwayTeam} +${escanteiosFora}
 
 📊 CARTÕES:
 ➡️ Mais de ${cartoes}
@@ -81,25 +50,17 @@ function gerarJogo(jogo) {
 `;
 }
 
-// 🎯 bilhete profissional
-function gerarBilhete() {
-  const jogo1 = escolherJogoUnico();
-  const jogo2 = escolherJogoUnico();
-
+// 🎯 gerar bilhete com jogos reais
+function gerarBilhete(jogo1, jogo2) {
   const oddTotal = (Math.random() * 3 + 4.5).toFixed(2);
-  const horario = gerarHorario();
-  const data = gerarData();
 
-  const gestao = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
-  const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
-
-  return `🚨🔥 BILHETE VIP SELECIONADO 🔥🚨
+  return `🚨🔥 BILHETE VIP COM JOGOS REAIS 🔥🚨
 
 💰 OPORTUNIDADE IDENTIFICADA
 
 🎯 ODD TOTAL: ${oddTotal}
 
-📅 ${data} às ${horario}
+📅 Hoje
 ⏱️ TEMPO REGULAMENTAR (90 MIN)
 
 ━━━━━━━━━━━━━━━━━━
@@ -112,37 +73,39 @@ ${gerarJogo(jogo2)}
 
 ━━━━━━━━━━━━━━━━━━
 
-💰 Entrada: ${gestao} da banca
-📊 Confiança: ${confianca}
+💰 Entrada: ${["3%", "4%", "5%"][Math.floor(Math.random() * 3)]}
+📊 Confiança: ${["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)]}
 
 ⏳ Odds podem sofrer alteração`;
 }
 
-// 📤 envio
-async function enviarMensagem(texto) {
+// 🔥 buscar jogos reais
+async function buscarJogos() {
   try {
-    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: texto
-      })
-    });
+    console.log("🔍 Buscando jogos reais...");
 
+    const res = await fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328");
     const data = await res.json();
-    console.log("📤 ENVIO:", data);
+
+    if (!data.events || data.events.length < 2) {
+      console.log("❌ Poucos jogos disponíveis");
+      return;
+    }
+
+    const jogo1 = data.events[Math.floor(Math.random() * data.events.length)];
+    const jogo2 = data.events[Math.floor(Math.random() * data.events.length)];
+
+    const msg = gerarBilhete(jogo1, jogo2);
+
+    enviarMensagem(msg);
 
   } catch (err) {
     console.log("❌ ERRO:", err);
   }
 }
 
-// 🔁 loop
-setInterval(() => {
-  console.log("📢 ENVIANDO BILHETE...");
-  enviarMensagem(gerarBilhete());
-}, 60000);
+// 🔁 loop (1 minuto)
+setInterval(buscarJogos, 60000);
 
 // 🚀 start
-console.log("🤖 BOT PROFISSIONAL ATIVO");
+console.log("🤖 BOT COM JOGOS REAIS ATIVO");
