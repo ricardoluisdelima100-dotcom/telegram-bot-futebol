@@ -16,97 +16,65 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA CORRETA =================
-function getDataFormatada() {
+// ================= DATA HOJE =================
+function getDataHoje() {
   const hoje = new Date();
-
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  const dia = String(hoje.getDate()).padStart(2, "0");
-
-  return `${ano}-${mes}-${dia}`;
+  return hoje.toISOString().split("T")[0];
 }
 
-// ================= BUSCAR JOGOS DO DIA (CORRETO) =================
+// ================= BUSCAR TODOS OS JOGOS DO DIA =================
 async function buscarJogosDoDia() {
   try {
-    const dataHoje = getDataFormatada();
+    const hoje = getDataHoje();
 
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${dataHoje}`
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
     );
 
     if (!data.events || data.events.length === 0) return [];
 
-    return data.events.slice(0, 5).map(ev => {
-      return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
+    // pega vários jogos (até 10)
+    return data.events.slice(0, 10).map(ev => {
+      const casa = ev.homeTeam.name;
+      const fora = ev.awayTeam.name;
+      const liga = ev.tournament.name;
+
+      return `🏆 ${liga}\n⚽ ${casa} vs ${fora}`;
     });
 
   } catch (err) {
-    console.log("Erro jogos do dia:", err.message);
-    return [];
-  }
-}
-
-// ================= BUSCAR AO VIVO =================
-async function buscarJogosAoVivo() {
-  try {
-    const { data } = await axios.get(
-      "https://api.sofascore.com/api/v1/sport/football/events/live"
-    );
-
-    if (!data.events || data.events.length === 0) return [];
-
-    return data.events.slice(0, 2).map(ev => {
-      return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
-    });
-
-  } catch (err) {
-    console.log("Erro ao vivo:", err.message);
+    console.log("Erro ao buscar jogos:", err.message);
     return [];
   }
 }
 
 // ================= GERAR MENSAGEM =================
-function gerarMensagem(jogo, tipo) {
-  return `🎯 ${tipo}
+function gerarMensagem(listaJogos) {
+  return `📅 JOGOS DE HOJE
 
-⚽ ${jogo}
+${listaJogos.join("\n\n")}
 
-📊 Sugestões:
-- Over 1.5 gols
-- Over 8.5 escanteios
-- Over 3.5 cartões`;
+🔥 Fique de olho nos melhores jogos para entrada!`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
   console.log("BOT RODANDO...");
 
-  const aoVivo = await buscarJogosAoVivo();
-  const doDia = await buscarJogosDoDia();
+  const jogos = await buscarJogosDoDia();
 
-  // AO VIVO
-  if (aoVivo.length > 0) {
-    for (let jogo of aoVivo) {
-      await enviarMensagem(gerarMensagem(jogo, "🔥 AO VIVO"));
-    }
-  } else {
-    await enviarMensagem("⚠️ Nenhum jogo ao vivo agora.");
+  if (jogos.length === 0) {
+    await enviarMensagem("⚠️ Nenhum jogo encontrado hoje.");
+    return;
   }
 
-  // DO DIA
-  if (doDia.length > 0) {
-    for (let jogo of doDia) {
-      await enviarMensagem(gerarMensagem(jogo, "📅 JOGOS DE HOJE"));
-    }
-  } else {
-    await enviarMensagem("⚠️ Nenhum jogo encontrado para hoje.");
-  }
+  const mensagem = gerarMensagem(jogos);
+
+  await enviarMensagem(mensagem);
 }
 
-// roda a cada 10 minutos
-setInterval(rodarBot, 10 * 60 * 1000);
+// roda a cada 1 hora (melhor pra esse tipo)
+setInterval(rodarBot, 60 * 60 * 1000);
 
 // roda ao iniciar
 rodarBot();
