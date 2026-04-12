@@ -22,7 +22,7 @@ function getDataHoje() {
   return hoje.toISOString().split("T")[0];
 }
 
-// ================= BUSCAR JOGOS DO BRASIL (CORRIGIDO) =================
+// ================= BUSCAR JOGOS DO BRASIL =================
 async function buscarJogosBrasil() {
   try {
     const hoje = getDataHoje();
@@ -33,23 +33,33 @@ async function buscarJogosBrasil() {
 
     if (!data.events) return [];
 
-    // 🔥 FILTRO CORRETO: país BRASIL
-    const jogosBrasil = data.events.filter(ev => {
+    return data.events.filter(ev => {
       return ev.tournament.category.name === "Brazil";
-    });
-
-    return jogosBrasil.map(ev => {
-      const casa = ev.homeTeam.name;
-      const fora = ev.awayTeam.name;
-      const liga = ev.tournament.name;
-
-      return `🏆 ${liga}\n⚽ ${casa} vs ${fora}`;
     });
 
   } catch (err) {
     console.log("Erro ao buscar jogos:", err.message);
     return [];
   }
+}
+
+// ================= GERAR PALPITE =================
+function gerarPalpite(jogo) {
+  const casa = jogo.homeTeam.name;
+  const fora = jogo.awayTeam.name;
+  const liga = jogo.tournament.name;
+
+  return `🇧🇷 ${liga}
+
+⚽ ${casa} vs ${fora}
+
+🎯 PALPITES:
+
+⚽ Gols: Over 1.5
+🚩 Escanteios: Over 8.5
+🟨 Cartões: Over 3.5
+
+🔥 Entrada padrão para jogo equilibrado`;
 }
 
 // ================= EXECUÇÃO =================
@@ -63,7 +73,13 @@ async function rodarBot() {
     return;
   }
 
-  await enviarMensagem(`🇧🇷 JOGOS DO BRASIL HOJE\n\n${jogos.join("\n\n")}`);
+  // envia só 3 jogos (evita spam)
+  const selecionados = jogos.slice(0, 3);
+
+  for (let jogo of selecionados) {
+    const mensagem = gerarPalpite(jogo);
+    await enviarMensagem(mensagem);
+  }
 }
 
 // roda a cada 1 hora
