@@ -1,5 +1,4 @@
 import axios from "axios";
-import * as cheerio from "cheerio"; // CORRIGIDO AQUI
 
 // ================= CONFIG =================
 const TOKEN = process.env.TELEGRAM_TOKEN;
@@ -17,23 +16,23 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= BUSCAR JOGOS REAIS =================
+// ================= BUSCAR JOGOS REAIS (API REAL) =================
 async function buscarJogosReais() {
   try {
-    const { data } = await axios.get("https://www.sofascore.com/football", {
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
+    const { data } = await axios.get(
+      "https://api.sofascore.com/api/v1/sport/football/events/live"
+    );
 
-    const $ = cheerio.load(data);
-    let jogos = [];
+    const eventos = data.events;
 
-    $(".event__match").each((i, el) => {
-      const casa = $(el).find(".event__participant--home").text().trim();
-      const fora = $(el).find(".event__participant--away").text().trim();
+    if (!eventos || eventos.length === 0) {
+      return [];
+    }
 
-      if (casa && fora) {
-        jogos.push(`${casa} vs ${fora}`);
-      }
+    const jogos = eventos.map(ev => {
+      const casa = ev.homeTeam.name;
+      const fora = ev.awayTeam.name;
+      return `${casa} vs ${fora}`;
     });
 
     return jogos.slice(0, 2);
@@ -45,23 +44,17 @@ async function buscarJogosReais() {
 
 // ================= GERAR BILHETE =================
 function gerarBilhete(jogo) {
-  return `🎯 BILHETE DO DIA
+  return `🎯 BILHETE AO VIVO
 
 ⚽ ${jogo}
 
-✅ Seguro:
-- Over 1.5 gols
-- Over 7 escanteios
+🔥 Mercado sugerido:
 
-⚖️ Médio:
-- Over 2.5 gols
+- Over 1.5 gols
 - Over 8.5 escanteios
 - Over 3.5 cartões
 
-💣 Arriscado:
-- Over 3.5 gols
-- Over 10 escanteios
-- Over 5.5 cartões`;
+💡 Jogo com tendência ofensiva`;
 }
 
 // ================= EXECUÇÃO =================
@@ -71,7 +64,7 @@ async function rodarBot() {
   const jogos = await buscarJogosReais();
 
   if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Não encontrei jogos hoje.");
+    await enviarMensagem("⚠️ Nenhum jogo ao vivo no momento.");
     return;
   }
 
