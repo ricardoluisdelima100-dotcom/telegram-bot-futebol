@@ -16,53 +16,49 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= BUSCAR JOGOS REAIS =================
-async function buscarJogosBrasil() {
-  try {
-    const { data } = await axios.get(
-      "https://www.thesportsdb.com/api/v1/json/3/eventsday.php?s=Soccer&d=2026-04-12"
-    );
-
-    if (!data.events) return [];
-
-    return data.events.filter(ev => {
-      return ev.strLeague.includes("Brazil");
-    });
-
-  } catch (err) {
-    console.log("Erro API:", err.message);
-    return [];
+// ================= SUA "API" (VOCÊ CONTROLA) =================
+const jogosHoje = [
+  {
+    liga: "Brasileirão Série A",
+    jogo: "Atlético-MG vs Grêmio",
+    hora: "19:00"
+  },
+  {
+    liga: "Brasileirão Série A",
+    jogo: "Fluminense vs Corinthians",
+    hora: "21:30"
+  },
+  {
+    liga: "Brasileirão Série B",
+    jogo: "Sport vs Ceará",
+    hora: "18:00"
   }
-}
+];
 
-// ================= GERAR MENSAGEM =================
+// ================= GERAR PALPITE =================
 function gerarMensagem(jogo) {
-  return `🇧🇷 ${jogo.strLeague}
+  return `🇧🇷 ${jogo.liga}
 
-⚽ ${jogo.strHomeTeam} vs ${jogo.strAwayTeam}
-🕒 ${jogo.strTime}
+⚽ ${jogo.jogo}
+🕒 ${jogo.hora}
 
 🎯 PALPITES:
 
 ⚽ Over 1.5 gols
 🚩 Over 8.5 escanteios
-🟨 Over 3.5 cartões`;
+🟨 Over 3.5 cartões
+
+🔥 Análise baseada em padrão ofensivo`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
   console.log("BOT ATIVO");
 
-  const jogos = await buscarJogosBrasil();
-
-  if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo do Brasil encontrado hoje.");
-    return;
-  }
-
-  for (let jogo of jogos.slice(0, 4)) {
+  for (let jogo of jogosHoje) {
     await enviarMensagem(gerarMensagem(jogo));
   }
 }
 
+// roda 1 vez ao iniciar
 rodarBot();
