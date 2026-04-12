@@ -16,49 +16,72 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= SUA "API" (VOCÊ CONTROLA) =================
-const jogosHoje = [
-  {
-    liga: "Brasileirão Série A",
-    jogo: "Atlético-MG vs Grêmio",
-    hora: "19:00"
-  },
-  {
-    liga: "Brasileirão Série A",
-    jogo: "Fluminense vs Corinthians",
-    hora: "21:30"
-  },
-  {
-    liga: "Brasileirão Série B",
-    jogo: "Sport vs Ceará",
-    hora: "18:00"
+// ================= DATA HOJE =================
+function getDataHoje() {
+  const hoje = new Date();
+  return hoje.toISOString().split("T")[0];
+}
+
+// ================= BUSCAR JOGOS REAIS =================
+async function buscarJogosBrasil() {
+  try {
+    const dataHoje = getDataHoje();
+
+    const { data } = await axios.get(
+      `https://api.sofascore.com/api/v1/sport/football/events/${dataHoje}`
+    );
+
+    if (!data.events) return [];
+
+    return data.events.filter(ev => {
+      return ev.tournament.category.name === "Brazil";
+    });
+
+  } catch (err) {
+    console.log("Erro API:", err.message);
+    return [];
   }
-];
+}
 
-// ================= GERAR PALPITE =================
+// ================= GERAR MENSAGEM =================
 function gerarMensagem(jogo) {
-  return `🇧🇷 ${jogo.liga}
+  const casa = jogo.homeTeam.name;
+  const fora = jogo.awayTeam.name;
+  const liga = jogo.tournament.name;
 
-⚽ ${jogo.jogo}
-🕒 ${jogo.hora}
+  const hora = new Date(jogo.startTimestamp * 1000)
+    .toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+  return `🇧🇷 ${liga}
+
+⚽ ${casa} vs ${fora}
+🕒 ${hora}
 
 🎯 PALPITES:
 
 ⚽ Over 1.5 gols
 🚩 Over 8.5 escanteios
-🟨 Over 3.5 cartões
-
-🔥 Análise baseada em padrão ofensivo`;
+🟨 Over 3.5 cartões`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
-  console.log("BOT ATIVO");
+  console.log("BOT RODANDO");
 
-  for (let jogo of jogosHoje) {
+  const jogos = await buscarJogosBrasil();
+
+  if (jogos.length === 0) {
+    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
+    return;
+  }
+
+  for (let jogo of jogos.slice(0, 5)) {
     await enviarMensagem(gerarMensagem(jogo));
   }
 }
 
-// roda 1 vez ao iniciar
+setInterval(rodarBot, 60 * 60 * 1000);
 rodarBot();
