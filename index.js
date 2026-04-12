@@ -3,9 +3,101 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
+// ⚽ jogos
+const jogos = [
+  ["Flamengo", "Palmeiras"],
+  ["Corinthians", "São Paulo"],
+  ["Grêmio", "Internacional"],
+  ["Atlético-MG", "Cruzeiro"],
+  ["Barcelona", "Real Madrid"],
+  ["Manchester City", "Liverpool"]
+];
+
+// 👤 jogadores
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// enviar mensagem
+// 🕒 horário
+function gerarHorario() {
+  const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
+  return horas[Math.floor(Math.random() * horas.length)];
+}
+
+// 📅 dia
+function gerarData() {
+  return Math.random() > 0.5 ? "Hoje" : "Amanhã";
+}
+
+// 🎯 gerar jogo
+function gerarJogo(jogo) {
+  const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
+  const chutesFora = (Math.random() * 2 + 8).toFixed(1);
+
+  const escanteiosCasa = Math.floor(Math.random() * 3 + 4);
+  const escanteiosFora = Math.floor(Math.random() * 3 + 4);
+
+  const cartoes = Math.floor(Math.random() * 3 + 3);
+
+  const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
+
+  return `
+⚽🔥 ${jogo[0]} 🆚 ${jogo[1]}
+
+📊 CHUTES:
+➡️ ${jogo[0]} +${chutesCasa}
+➡️ ${jogo[1]} +${chutesFora}
+
+📊 ESCANTEIOS:
+➡️ ${jogo[0]} +${escanteiosCasa}
+➡️ ${jogo[1]} +${escanteiosFora}
+
+📊 CARTÕES:
+➡️ Mais de ${cartoes}
+➡️ Ambas recebem cartão
+🟨 ${jogador} leva cartão
+`;
+}
+
+// 🎯 bilhete
+function gerarBilhete() {
+  const jogo1 = jogos[Math.floor(Math.random() * jogos.length)];
+  const jogo2 = jogos[Math.floor(Math.random() * jogos.length)];
+
+  const odd1 = (Math.random() * 1.5 + 1.80).toFixed(2);
+  const odd2 = (Math.random() * 1.5 + 1.80).toFixed(2);
+  const total = (odd1 * odd2).toFixed(2);
+
+  const horario = gerarHorario();
+  const data = gerarData();
+
+  return `🚨💣🔥 BILHETE VIP EXPLOSIVO 🔥💣🚨
+
+💰💸💎 OPORTUNIDADE DE OURO 💎💸💰
+
+🎯📊 ODD TOTAL: ${total} 🚀🔥
+
+📅 ${data} às ${horario}
+⏱️ TEMPO REGULAMENTAR (90 MIN)
+
+━━━━━━━━━━━━━━━━━━
+
+${gerarJogo(jogo1)}
+📈 Odd: ${odd1}
+
+━━━━━━━━━━━━━━━━━━
+
+${gerarJogo(jogo2)}
+📈 Odd: ${odd2}
+
+━━━━━━━━━━━━━━━━━━
+
+💰💸 ENTRADA: ${["3%", "4%", "5%"][Math.floor(Math.random() * 3)]}
+📊🧠 CONFIANÇA: ${["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)]}
+
+🚨⏳ CORRE! ESSA ODD VAI CAIR
+🔥💣 FOCO NO GREEN 🟢🏆`;
+}
+
+// 📤 envio
 async function enviarMensagem(texto) {
   await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
     method: "POST",
@@ -17,81 +109,11 @@ async function enviarMensagem(texto) {
   });
 }
 
-// gerar odd realista
-function gerarOdd() {
-  return (Math.random() * 1.5 + 1.80).toFixed(2);
-}
+// 🔁 loop
+setInterval(() => {
+  console.log("📢 ENVIANDO BILHETE...");
+  enviarMensagem(gerarBilhete());
+}, 60000);
 
-// gerar análise estilo SofaScore
-function gerarAnalise(jogo) {
-  const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
-
-  return `
-🧠 ANÁLISE DO JOGO:
-
-🔥 ${jogo.strHomeTeam} vem pressionando ofensivamente  
-📊 Tendência de escanteios elevados  
-⚠️ Jogo com média alta de cartões  
-
-💣 ${jogador} com risco de cartão  
-
-📈 Entrada com valor detectada
-`;
-}
-
-// gerar bilhete
-function gerarBilhete(jogo1, jogo2) {
-  const odd1 = gerarOdd();
-  const odd2 = gerarOdd();
-
-  const total = (odd1 * odd2).toFixed(2);
-
-  return `🚨🔥 BILHETE VIP 🔥🚨
-
-🎯 ODD TOTAL: ${total}
-
-━━━━━━━━━━━━━━━━━━
-
-⚽ ${jogo1.strHomeTeam} vs ${jogo1.strAwayTeam}
-📈 Odd: ${odd1}
-
-${gerarAnalise(jogo1)}
-
-━━━━━━━━━━━━━━━━━━
-
-⚽ ${jogo2.strHomeTeam} vs ${jogo2.strAwayTeam}
-📈 Odd: ${odd2}
-
-${gerarAnalise(jogo2)}
-
-━━━━━━━━━━━━━━━━━━
-
-💰 Entrada: 3% a 5%
-📊 Confiança: ALTA 🔥
-
-⏳ Odds podem baixar`;
-}
-
-// buscar jogos reais
-async function buscarJogos() {
-  try {
-    const res = await fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328");
-    const data = await res.json();
-
-    if (!data.events || data.events.length < 2) return;
-
-    const j1 = data.events[Math.floor(Math.random() * data.events.length)];
-    const j2 = data.events[Math.floor(Math.random() * data.events.length)];
-
-    const msg = gerarBilhete(j1, j2);
-
-    enviarMensagem(msg);
-
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-setInterval(buscarJogos, 60000);
-
-console.log("🤖 BOT ESTÁVEL ATIVO");
+// 🚀 start
+console.log("🤖 BOT ESTILO ORIGINAL ATIVO");
