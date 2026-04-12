@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as cheerio from "cheerio";
 
 // ================= CONFIG =================
 const TOKEN = process.env.TELEGRAM_TOKEN;
@@ -16,39 +17,31 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= VERIFICAR SE É HOJE =================
-function ehHoje(timestamp) {
-  const hoje = new Date();
-  const dataJogo = new Date(timestamp * 1000);
-
-  return (
-    dataJogo.getDate() === hoje.getDate() &&
-    dataJogo.getMonth() === hoje.getMonth() &&
-    dataJogo.getFullYear() === hoje.getFullYear()
-  );
-}
-
-// ================= BUSCAR JOGOS BRASIL (CORRETO) =================
+// ================= BUSCAR JOGOS BRASIL (SCRAPING REAL) =================
 async function buscarJogosBrasil() {
   try {
-    const { data } = await axios.get(
-      "https://api.sofascore.com/api/v1/sport/football/events"
-    );
-
-    if (!data.events) return [];
-
-    return data.events.filter(ev => {
-      // 🇧🇷 Brasil
-      if (ev.tournament.category.name !== "Brazil") return false;
-
-      // 📅 hoje
-      if (!ehHoje(ev.startTimestamp)) return false;
-
-      // ❌ não finalizado
-      if (ev.status?.type === "finished") return false;
-
-      return true;
+    const { data } = await axios.get("https://www.sofascore.com/football", {
+      headers: { "User-Agent": "Mozilla/5.0" }
     });
+
+    const $ = cheerio.load(data);
+    let jogos = [];
+
+    $(".event__match").each((i, el) => {
+      const liga = $(el).find(".event__title").text().toLowerCase();
+
+      // 🔥 FILTRA SÓ BRASIL
+      if (!liga.includes("brazil")) return;
+
+      const casa = $(el).find(".event__participant--home").text().trim();
+      const fora = $(el).find(".event__participant--away").text().trim();
+
+      if (casa && fora) {
+        jogos.push(`${casa} vs ${fora}`);
+      }
+    });
+
+    return jogos.slice(0, 5);
 
   } catch (err) {
     console.log("Erro ao buscar jogos:", err.message);
@@ -58,20 +51,9 @@ async function buscarJogosBrasil() {
 
 // ================= GERAR PALPITE =================
 function gerarPalpite(jogo) {
-  const casa = jogo.homeTeam.name;
-  const fora = jogo.awayTeam.name;
-  const liga = jogo.tournament.name;
+  return `🇧🇷 JOGO DO DIA
 
-  const horario = new Date(jogo.startTimestamp * 1000)
-    .toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  return `🇧🇷 ${liga}
-
-⚽ ${casa} vs ${fora}
-🕒 ${horario}
+⚽ ${jogo}
 
 🎯 PALPITES:
 
@@ -87,13 +69,11 @@ async function rodarBot() {
   const jogos = await buscarJogosBrasil();
 
   if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
+    await enviarMensagem("⚠️ Não encontrei jogos do Brasil hoje.");
     return;
   }
 
-  const selecionados = jogos.slice(0, 4);
-
-  for (let jogo of selecionados) {
+  for (let jogo of jogos) {
     await enviarMensagem(gerarPalpite(jogo));
   }
 }
