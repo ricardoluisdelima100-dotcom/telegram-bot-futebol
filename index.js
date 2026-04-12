@@ -12,70 +12,32 @@ async function enviarMensagem(texto) {
       text: texto,
     });
   } catch (err) {
-    console.log("Erro Telegram:", err.message);
+    console.log("Erro:", err.message);
   }
 }
 
-// ================= PEGAR LIGAS DO BRASIL =================
-async function buscarLigasBrasil() {
-  try {
-    const { data } = await axios.get(
-      "https://api.sofascore.com/api/v1/unique-tournament/325/events/last/0"
-    );
-
-    return data.events || [];
-  } catch (err) {
-    console.log("Erro liga:", err.message);
-    return [];
+// ================= JOGOS REAIS (VOCÊ CONTROLA) =================
+const jogosHoje = [
+  {
+    liga: "Brasileirão Série A",
+    casa: "Flamengo",
+    fora: "Palmeiras",
+    hora: "21:30"
+  },
+  {
+    liga: "Brasileirão Série B",
+    casa: "Sport",
+    fora: "Ceará",
+    hora: "19:00"
   }
-}
-
-// ================= PEGAR JOGOS DO DIA =================
-async function buscarJogosBrasilHoje() {
-  try {
-    const { data } = await axios.get(
-      "https://api.sofascore.com/api/v1/sport/football/events"
-    );
-
-    if (!data.events) return [];
-
-    const hoje = new Date();
-
-    return data.events.filter(ev => {
-      const dataJogo = new Date(ev.startTimestamp * 1000);
-
-      const ehHoje =
-        dataJogo.getDate() === hoje.getDate() &&
-        dataJogo.getMonth() === hoje.getMonth();
-
-      const ehBrasil =
-        ev.tournament.category.name === "Brazil";
-
-      return ehHoje && ehBrasil;
-    });
-
-  } catch (err) {
-    console.log("Erro jogos:", err.message);
-    return [];
-  }
-}
+];
 
 // ================= GERAR PALPITE =================
 function gerarMensagem(jogo) {
-  const casa = jogo.homeTeam.name;
-  const fora = jogo.awayTeam.name;
-  const liga = jogo.tournament.name;
+  return `🇧🇷 ${jogo.liga}
 
-  const hora = new Date(jogo.startTimestamp * 1000)
-    .toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  return `🇧🇷 ${liga}
-
-⚽ ${casa} vs ${fora}
-🕒 ${hora}
+⚽ ${jogo.casa} vs ${jogo.fora}
+🕒 ${jogo.hora}
 
 🎯 PALPITES:
 
@@ -86,21 +48,12 @@ function gerarMensagem(jogo) {
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
-  console.log("BOT RODANDO");
+  console.log("BOT ATIVO");
 
-  const jogos = await buscarJogosBrasilHoje();
-
-  if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo encontrado hoje.");
-    return;
-  }
-
-  const selecionados = jogos.slice(0, 4);
-
-  for (let jogo of selecionados) {
+  for (let jogo of jogosHoje) {
     await enviarMensagem(gerarMensagem(jogo));
   }
 }
 
-setInterval(rodarBot, 60 * 60 * 1000);
+// roda 1 vez por dia
 rodarBot();
