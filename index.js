@@ -2,8 +2,8 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const API_KEY = process.env.RAPIDAPI_KEY;
 
-async function testarAPI() {
-  const res = await fetch("https://api-football-v1.p.rapidapi.com/v3/fixtures?live=all", {
+async function buscarJogos() {
+  const res = await fetch("https://api-football-v1.p.rapidapi.com/v3/fixtures?next=5", {
     method: "GET",
     headers: {
       "x-rapidapi-key": API_KEY,
@@ -12,7 +12,8 @@ async function testarAPI() {
   });
 
   const data = await res.json();
-  console.log(data);
+
+  console.log(JSON.stringify(data, null, 2));
 }
 
-testarAPI();
+buscarJogos();
