@@ -19,25 +19,23 @@ async function enviarMensagem(texto) {
 // ================= BUSCAR JOGOS DO BRASIL =================
 async function buscarJogosBrasil() {
   try {
+    const hoje = new Date().toISOString().split("T")[0];
+
     const { data } = await axios.get(
-      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${new Date().toISOString().split("T")[0]}`
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
     );
 
     if (!data.events) return [];
 
-    const agora = new Date();
+    return data.events.filter(ev => {
+      // 🇧🇷 só Brasil
+      if (ev.tournament.category.name !== "Brazil") return false;
 
-    return data.events
-      .filter(ev => {
-        // 🇧🇷 só Brasil
-        if (ev.tournament.category.name !== "Brazil") return false;
+      // ❌ ignora jogo finalizado
+      if (ev.status?.type === "finished") return false;
 
-        // ⏰ horário do jogo
-        const dataJogo = new Date(ev.startTimestamp * 1000);
-
-        // 🔥 só jogos que ainda vão acontecer
-        return dataJogo > agora;
-      });
+      return true;
+    });
 
   } catch (err) {
     console.log("Erro ao buscar jogos:", err.message);
@@ -50,10 +48,12 @@ function gerarPalpite(jogo) {
   const casa = jogo.homeTeam.name;
   const fora = jogo.awayTeam.name;
   const liga = jogo.tournament.name;
-  const horario = new Date(jogo.startTimestamp * 1000).toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+
+  const horario = new Date(jogo.startTimestamp * 1000)
+    .toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
   return `🇧🇷 ${liga}
 
@@ -62,9 +62,9 @@ function gerarPalpite(jogo) {
 
 🎯 PALPITES:
 
-⚽ Gols: Over 1.5
-🚩 Escanteios: Over 8.5
-🟨 Cartões: Over 3.5`;
+⚽ Over 1.5 gols
+🚩 Over 8.5 escanteios
+🟨 Over 3.5 cartões`;
 }
 
 // ================= EXECUÇÃO =================
@@ -74,15 +74,14 @@ async function rodarBot() {
   const jogos = await buscarJogosBrasil();
 
   if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo futuro do Brasil hoje.");
+    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
     return;
   }
 
   const selecionados = jogos.slice(0, 3);
 
   for (let jogo of selecionados) {
-    const mensagem = gerarPalpite(jogo);
-    await enviarMensagem(mensagem);
+    await enviarMensagem(gerarPalpite(jogo));
   }
 }
 
