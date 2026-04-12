@@ -16,13 +16,13 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= DATA HOJE =================
+// ================= DATA =================
 function getDataHoje() {
   const hoje = new Date();
   return hoje.toISOString().split("T")[0];
 }
 
-// ================= BUSCAR JOGOS BRASIL =================
+// ================= BUSCAR JOGOS DO BRASIL (CORRIGIDO) =================
 async function buscarJogosBrasil() {
   try {
     const hoje = getDataHoje();
@@ -31,18 +31,11 @@ async function buscarJogosBrasil() {
       `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
     );
 
-    if (!data.events || data.events.length === 0) return [];
+    if (!data.events) return [];
 
-    // FILTRAR SÓ BRASIL (SÉRIE A E B)
+    // 🔥 FILTRO CORRETO: país BRASIL
     const jogosBrasil = data.events.filter(ev => {
-      const liga = ev.tournament.name.toLowerCase();
-
-      return (
-        liga.includes("brasileiro") ||
-        liga.includes("serie a") ||
-        liga.includes("serie b") ||
-        liga.includes("brazil")
-      );
+      return ev.tournament.category.name === "Brazil";
     });
 
     return jogosBrasil.map(ev => {
@@ -59,15 +52,6 @@ async function buscarJogosBrasil() {
   }
 }
 
-// ================= GERAR MENSAGEM =================
-function gerarMensagem(jogos) {
-  return `🇧🇷 JOGOS DO BRASIL HOJE
-
-${jogos.join("\n\n")}
-
-🔥 Série A e Série B`;
-}
-
 // ================= EXECUÇÃO =================
 async function rodarBot() {
   console.log("BOT RODANDO...");
@@ -79,7 +63,7 @@ async function rodarBot() {
     return;
   }
 
-  await enviarMensagem(gerarMensagem(jogos));
+  await enviarMensagem(`🇧🇷 JOGOS DO BRASIL HOJE\n\n${jogos.join("\n\n")}`);
 }
 
 // roda a cada 1 hora
