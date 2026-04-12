@@ -3,7 +3,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// 👤 jogadores fictícios
+// 👤 jogadores
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
 // 📤 enviar mensagem
@@ -20,28 +20,29 @@ async function enviarMensagem(texto) {
   console.log("📤 ENVIADO");
 }
 
-// 🎯 gerar jogo
-function gerarJogo(jogo) {
-  const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
-  const chutesFora = (Math.random() * 2 + 8).toFixed(1);
+// 🎯 gerar odd realista
+function gerarOddRealista() {
+  return (Math.random() * 1.5 + 1.80).toFixed(2); // odds entre 1.80 e 3.30
+}
 
-  const escanteiosCasa = Math.floor(Math.random() * 3 + 4);
-  const escanteiosFora = Math.floor(Math.random() * 3 + 4);
-
-  const cartoes = Math.floor(Math.random() * 3 + 3);
-
+// 🎯 gerar mercados
+function gerarMercados(jogo) {
   const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
+
+  const chutes = (Math.random() * 2 + 9).toFixed(1);
+  const escanteios = Math.floor(Math.random() * 3 + 4);
+  const cartoes = Math.floor(Math.random() * 3 + 3);
 
   return `
 ⚽🔥 ${jogo.strHomeTeam} 🆚 ${jogo.strAwayTeam}
 
 📊 CHUTES:
-➡️ ${jogo.strHomeTeam} +${chutesCasa}
-➡️ ${jogo.strAwayTeam} +${chutesFora}
+➡️ ${jogo.strHomeTeam} +${chutes}
+➡️ ${jogo.strAwayTeam} +${chutes}
 
 📊 ESCANTEIOS:
-➡️ ${jogo.strHomeTeam} +${escanteiosCasa}
-➡️ ${jogo.strAwayTeam} +${escanteiosFora}
+➡️ ${jogo.strHomeTeam} +${escanteios}
+➡️ ${jogo.strAwayTeam} +${escanteios}
 
 📊 CARTÕES:
 ➡️ Mais de ${cartoes}
@@ -50,26 +51,28 @@ function gerarJogo(jogo) {
 `;
 }
 
-// 🎯 gerar bilhete
+// 🎯 bilhete
 function gerarBilhete(jogo1, jogo2) {
-  const oddTotal = (Math.random() * 3 + 4.5).toFixed(2);
+  const odd1 = gerarOddRealista();
+  const odd2 = gerarOddRealista();
 
-  return `🚨🔥 BILHETE VIP COM JOGOS REAIS 🔥🚨
+  const oddTotal = (odd1 * odd2).toFixed(2);
+
+  return `🚨🔥 BILHETE VIP 🔥🚨
 
 💰 OPORTUNIDADE IDENTIFICADA
 
-🎯 ODD TOTAL: ${oddTotal}
-
-📅 Hoje
-⏱️ TEMPO REGULAMENTAR (90 MIN)
+🎯 ODD TOTAL: ${oddTotal} 🚀
 
 ━━━━━━━━━━━━━━━━━━
 
-${gerarJogo(jogo1)}
+${gerarMercados(jogo1)}
+📈 Odd: ${odd1}
 
 ━━━━━━━━━━━━━━━━━━
 
-${gerarJogo(jogo2)}
+${gerarMercados(jogo2)}
+📈 Odd: ${odd2}
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -79,36 +82,21 @@ ${gerarJogo(jogo2)}
 ⏳ Odds podem sofrer alteração`;
 }
 
-// 🔥 buscar jogos de várias ligas
+// 🔥 buscar jogos reais
 async function buscarJogos() {
   try {
-    console.log("🔍 Buscando jogos reais...");
+    console.log("🔍 Buscando jogos...");
 
-    const ligas = [
-      4328, // Premier League
-      4335, // La Liga
-      4332, // Bundesliga
-      4331  // Serie A
-    ];
+    const res = await fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328");
+    const data = await res.json();
 
-    let todosJogos = [];
-
-    for (const liga of ligas) {
-      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga}`);
-      const data = await res.json();
-
-      if (data.events) {
-        todosJogos = todosJogos.concat(data.events);
-      }
-    }
-
-    if (todosJogos.length < 2) {
-      console.log("❌ Sem jogos suficientes");
+    if (!data.events || data.events.length < 2) {
+      console.log("❌ Poucos jogos");
       return;
     }
 
-    const jogo1 = todosJogos[Math.floor(Math.random() * todosJogos.length)];
-    const jogo2 = todosJogos[Math.floor(Math.random() * todosJogos.length)];
+    const jogo1 = data.events[Math.floor(Math.random() * data.events.length)];
+    const jogo2 = data.events[Math.floor(Math.random() * data.events.length)];
 
     const msg = gerarBilhete(jogo1, jogo2);
 
@@ -123,4 +111,4 @@ async function buscarJogos() {
 setInterval(buscarJogos, 60000);
 
 // 🚀 start
-console.log("🤖 BOT COM JOGOS REAIS MULTI-LIGA ATIVO");
+console.log("🤖 BOT SEM API (ESTÁVEL) ATIVO");
