@@ -20,7 +20,7 @@ async function enviarMensagem(texto) {
   console.log("📤 ENVIADO");
 }
 
-// 🎯 gerar jogo com dados reais
+// 🎯 gerar jogo
 function gerarJogo(jogo) {
   const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
   const chutesFora = (Math.random() * 2 + 8).toFixed(1);
@@ -50,7 +50,7 @@ function gerarJogo(jogo) {
 `;
 }
 
-// 🎯 gerar bilhete com jogos reais
+// 🎯 gerar bilhete
 function gerarBilhete(jogo1, jogo2) {
   const oddTotal = (Math.random() * 3 + 4.5).toFixed(2);
 
@@ -79,21 +79,36 @@ ${gerarJogo(jogo2)}
 ⏳ Odds podem sofrer alteração`;
 }
 
-// 🔥 buscar jogos reais
+// 🔥 buscar jogos de várias ligas
 async function buscarJogos() {
   try {
     console.log("🔍 Buscando jogos reais...");
 
-    const res = await fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328");
-    const data = await res.json();
+    const ligas = [
+      4328, // Premier League
+      4335, // La Liga
+      4332, // Bundesliga
+      4331  // Serie A
+    ];
 
-    if (!data.events || data.events.length < 2) {
-      console.log("❌ Poucos jogos disponíveis");
+    let todosJogos = [];
+
+    for (const liga of ligas) {
+      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${liga}`);
+      const data = await res.json();
+
+      if (data.events) {
+        todosJogos = todosJogos.concat(data.events);
+      }
+    }
+
+    if (todosJogos.length < 2) {
+      console.log("❌ Sem jogos suficientes");
       return;
     }
 
-    const jogo1 = data.events[Math.floor(Math.random() * data.events.length)];
-    const jogo2 = data.events[Math.floor(Math.random() * data.events.length)];
+    const jogo1 = todosJogos[Math.floor(Math.random() * todosJogos.length)];
+    const jogo2 = todosJogos[Math.floor(Math.random() * todosJogos.length)];
 
     const msg = gerarBilhete(jogo1, jogo2);
 
@@ -104,8 +119,8 @@ async function buscarJogos() {
   }
 }
 
-// 🔁 loop (1 minuto)
+// 🔁 loop
 setInterval(buscarJogos, 60000);
 
 // 🚀 start
-console.log("🤖 BOT COM JOGOS REAIS ATIVO");
+console.log("🤖 BOT COM JOGOS REAIS MULTI-LIGA ATIVO");
