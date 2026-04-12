@@ -16,8 +16,37 @@ async function enviarMensagem(texto) {
   }
 }
 
-// ================= BUSCAR JOGOS REAIS (API REAL) =================
-async function buscarJogosReais() {
+// ================= DATA DE HOJE =================
+function getHoje() {
+  const hoje = new Date();
+  return hoje.toISOString().split("T")[0];
+}
+
+// ================= BUSCAR JOGOS DO DIA =================
+async function buscarJogosDoDia() {
+  try {
+    const hoje = getHoje();
+
+    const { data } = await axios.get(
+      `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${hoje}`
+    );
+
+    const eventos = data.events;
+
+    if (!eventos || eventos.length === 0) return [];
+
+    return eventos.slice(0, 3).map(ev => {
+      return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
+    });
+
+  } catch (err) {
+    console.log("Erro jogos do dia:", err.message);
+    return [];
+  }
+}
+
+// ================= BUSCAR JOGOS AO VIVO =================
+async function buscarJogosAoVivo() {
   try {
     const { data } = await axios.get(
       "https://api.sofascore.com/api/v1/sport/football/events/live"
@@ -25,52 +54,55 @@ async function buscarJogosReais() {
 
     const eventos = data.events;
 
-    if (!eventos || eventos.length === 0) {
-      return [];
-    }
+    if (!eventos || eventos.length === 0) return [];
 
-    const jogos = eventos.map(ev => {
-      const casa = ev.homeTeam.name;
-      const fora = ev.awayTeam.name;
-      return `${casa} vs ${fora}`;
+    return eventos.slice(0, 2).map(ev => {
+      return `${ev.homeTeam.name} vs ${ev.awayTeam.name}`;
     });
 
-    return jogos.slice(0, 2);
   } catch (err) {
-    console.log("Erro ao buscar jogos:", err.message);
+    console.log("Erro jogos ao vivo:", err.message);
     return [];
   }
 }
 
-// ================= GERAR BILHETE =================
-function gerarBilhete(jogo) {
-  return `🎯 BILHETE AO VIVO
+// ================= GERAR MENSAGEM =================
+function gerarMensagem(jogo, tipo) {
+  return `🎯 ${tipo}
 
 ⚽ ${jogo}
 
-🔥 Mercado sugerido:
-
+📊 Sugestões:
 - Over 1.5 gols
 - Over 8.5 escanteios
 - Over 3.5 cartões
 
-💡 Jogo com tendência ofensiva`;
+🔥 Entrada com base em padrão ofensivo`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
   console.log("BOT RODANDO...");
 
-  const jogos = await buscarJogosReais();
+  const aoVivo = await buscarJogosAoVivo();
+  const doDia = await buscarJogosDoDia();
 
-  if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo ao vivo no momento.");
-    return;
+  // AO VIVO
+  if (aoVivo.length > 0) {
+    for (let jogo of aoVivo) {
+      await enviarMensagem(gerarMensagem(jogo, "🔥 AO VIVO"));
+    }
+  } else {
+    await enviarMensagem("⚠️ Nenhum jogo ao vivo agora.");
   }
 
-  for (let jogo of jogos) {
-    const mensagem = gerarBilhete(jogo);
-    await enviarMensagem(mensagem);
+  // PRÉ-JOGO (DO DIA)
+  if (doDia.length > 0) {
+    for (let jogo of doDia) {
+      await enviarMensagem(gerarMensagem(jogo, "📅 PRÉ-JOGO"));
+    }
+  } else {
+    await enviarMensagem("⚠️ Nenhum jogo do dia encontrado.");
   }
 }
 
