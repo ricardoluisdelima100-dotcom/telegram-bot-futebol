@@ -3,20 +3,44 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// ⚽ jogos
+// ⚽ jogos mais realistas
 const jogos = [
   ["Flamengo", "Palmeiras"],
   ["Corinthians", "São Paulo"],
+  ["Atlético-MG", "Fluminense"],
   ["Grêmio", "Internacional"],
-  ["Atlético-MG", "Cruzeiro"],
+  ["Botafogo", "Vasco"],
+  ["Cruzeiro", "Bahia"],
   ["Barcelona", "Real Madrid"],
-  ["Manchester City", "Liverpool"]
+  ["Manchester City", "Arsenal"],
+  ["Liverpool", "Chelsea"],
+  ["PSG", "Marseille"]
 ];
 
 // 👤 jogadores
 const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
 
-// 🕒 horário
+// 🧠 controle de repetição
+let ultimoJogo1 = "";
+let ultimoJogo2 = "";
+
+function escolherJogoUnico() {
+  let jogo;
+
+  do {
+    jogo = jogos[Math.floor(Math.random() * jogos.length)];
+  } while (
+    jogo.join() === ultimoJogo1 ||
+    jogo.join() === ultimoJogo2
+  );
+
+  ultimoJogo2 = ultimoJogo1;
+  ultimoJogo1 = jogo.join();
+
+  return jogo;
+}
+
+// 🕒 horário mais real
 function gerarHorario() {
   const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
   return horas[Math.floor(Math.random() * horas.length)];
@@ -24,10 +48,10 @@ function gerarHorario() {
 
 // 📅 dia
 function gerarData() {
-  return Math.random() > 0.5 ? "Hoje" : "Amanhã";
+  return Math.random() > 0.6 ? "Amanhã" : "Hoje";
 }
 
-// 🎯 gerar jogo
+// 🎯 jogo realista
 function gerarJogo(jogo) {
   const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
   const chutesFora = (Math.random() * 2 + 8).toFixed(1);
@@ -57,21 +81,24 @@ function gerarJogo(jogo) {
 `;
 }
 
-// 🎯 bilhete
+// 🎯 bilhete profissional
 function gerarBilhete() {
-  const jogo1 = jogos[Math.floor(Math.random() * jogos.length)];
-  const jogo2 = jogos[Math.floor(Math.random() * jogos.length)];
+  const jogo1 = escolherJogoUnico();
+  const jogo2 = escolherJogoUnico();
 
-  const odd1 = (Math.random() * 1.5 + 1.80).toFixed(2);
-  const odd2 = (Math.random() * 1.5 + 1.80).toFixed(2);
+  const odd1 = (Math.random() * 0.8 + 1.80).toFixed(2);
+  const odd2 = (Math.random() * 0.8 + 1.80).toFixed(2);
   const total = (odd1 * odd2).toFixed(2);
 
   const horario = gerarHorario();
   const data = gerarData();
 
+  const entrada = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
+  const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
+
   return `🚨💣🔥 BILHETE VIP EXPLOSIVO 🔥💣🚨
 
-💰💸💎 OPORTUNIDADE DE OURO 💎💸💰
+💰💸💎 ENTRADA DE VALOR IDENTIFICADA 💎💸💰
 
 🎯📊 ODD TOTAL: ${total} 🚀🔥
 
@@ -90,23 +117,30 @@ ${gerarJogo(jogo2)}
 
 ━━━━━━━━━━━━━━━━━━
 
-💰💸 ENTRADA: ${["3%", "4%", "5%"][Math.floor(Math.random() * 3)]}
-📊🧠 CONFIANÇA: ${["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)]}
+💰💸 ENTRADA: ${entrada} da banca
+📊🧠 CONFIANÇA: ${confianca}
 
-🚨⏳ CORRE! ESSA ODD VAI CAIR
-🔥💣 FOCO NO GREEN 🟢🏆`;
+🚨⏳ MERCADO OSCILANDO!
+🔥💣 ENTRE ANTES DA QUEDA DA ODD 🟢🏆`;
 }
 
 // 📤 envio
 async function enviarMensagem(texto) {
-  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: texto
-    })
-  });
+  try {
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: texto
+      })
+    });
+
+    console.log("📤 ENVIADO");
+
+  } catch (err) {
+    console.log("❌ ERRO:", err);
+  }
 }
 
 // 🔁 loop
@@ -116,4 +150,4 @@ setInterval(() => {
 }, 60000);
 
 // 🚀 start
-console.log("🤖 BOT ESTILO ORIGINAL ATIVO");
+console.log("🤖 BOT VIP ULTRA ATIVO");
