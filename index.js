@@ -22,8 +22,8 @@ function getDataHoje() {
   return hoje.toISOString().split("T")[0];
 }
 
-// ================= BUSCAR TODOS OS JOGOS DO DIA =================
-async function buscarJogosDoDia() {
+// ================= BUSCAR JOGOS BRASIL =================
+async function buscarJogosBrasil() {
   try {
     const hoje = getDataHoje();
 
@@ -33,8 +33,19 @@ async function buscarJogosDoDia() {
 
     if (!data.events || data.events.length === 0) return [];
 
-    // pega vários jogos (até 10)
-    return data.events.slice(0, 10).map(ev => {
+    // FILTRAR SÓ BRASIL (SÉRIE A E B)
+    const jogosBrasil = data.events.filter(ev => {
+      const liga = ev.tournament.name.toLowerCase();
+
+      return (
+        liga.includes("brasileiro") ||
+        liga.includes("serie a") ||
+        liga.includes("serie b") ||
+        liga.includes("brazil")
+      );
+    });
+
+    return jogosBrasil.map(ev => {
       const casa = ev.homeTeam.name;
       const fora = ev.awayTeam.name;
       const liga = ev.tournament.name;
@@ -49,31 +60,29 @@ async function buscarJogosDoDia() {
 }
 
 // ================= GERAR MENSAGEM =================
-function gerarMensagem(listaJogos) {
-  return `📅 JOGOS DE HOJE
+function gerarMensagem(jogos) {
+  return `🇧🇷 JOGOS DO BRASIL HOJE
 
-${listaJogos.join("\n\n")}
+${jogos.join("\n\n")}
 
-🔥 Fique de olho nos melhores jogos para entrada!`;
+🔥 Série A e Série B`;
 }
 
 // ================= EXECUÇÃO =================
 async function rodarBot() {
   console.log("BOT RODANDO...");
 
-  const jogos = await buscarJogosDoDia();
+  const jogos = await buscarJogosBrasil();
 
   if (jogos.length === 0) {
-    await enviarMensagem("⚠️ Nenhum jogo encontrado hoje.");
+    await enviarMensagem("⚠️ Nenhum jogo do Brasil hoje.");
     return;
   }
 
-  const mensagem = gerarMensagem(jogos);
-
-  await enviarMensagem(mensagem);
+  await enviarMensagem(gerarMensagem(jogos));
 }
 
-// roda a cada 1 hora (melhor pra esse tipo)
+// roda a cada 1 hora
 setInterval(rodarBot, 60 * 60 * 1000);
 
 // roda ao iniciar
