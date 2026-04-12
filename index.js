@@ -1,153 +1,88 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+import axios from "axios";
+import cheerio from "cheerio";
 
+// ================= CONFIG =================
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.ID_DO_CHAT;
 
-// ⚽ jogos mais realistas
-const jogos = [
-  ["Flamengo", "Palmeiras"],
-  ["Corinthians", "São Paulo"],
-  ["Atlético-MG", "Fluminense"],
-  ["Grêmio", "Internacional"],
-  ["Botafogo", "Vasco"],
-  ["Cruzeiro", "Bahia"],
-  ["Barcelona", "Real Madrid"],
-  ["Manchester City", "Arsenal"],
-  ["Liverpool", "Chelsea"],
-  ["PSG", "Marseille"]
-];
-
-// 👤 jogadores
-const jogadores = ["João Silva", "Carlos Souza", "Pedro Lima", "Lucas Rocha"];
-
-// 🧠 controle de repetição
-let ultimoJogo1 = "";
-let ultimoJogo2 = "";
-
-function escolherJogoUnico() {
-  let jogo;
-
-  do {
-    jogo = jogos[Math.floor(Math.random() * jogos.length)];
-  } while (
-    jogo.join() === ultimoJogo1 ||
-    jogo.join() === ultimoJogo2
-  );
-
-  ultimoJogo2 = ultimoJogo1;
-  ultimoJogo1 = jogo.join();
-
-  return jogo;
-}
-
-// 🕒 horário mais real
-function gerarHorario() {
-  const horas = ["18:00", "19:00", "20:00", "21:30", "22:00"];
-  return horas[Math.floor(Math.random() * horas.length)];
-}
-
-// 📅 dia
-function gerarData() {
-  return Math.random() > 0.6 ? "Amanhã" : "Hoje";
-}
-
-// 🎯 jogo realista
-function gerarJogo(jogo) {
-  const chutesCasa = (Math.random() * 2 + 9).toFixed(1);
-  const chutesFora = (Math.random() * 2 + 8).toFixed(1);
-
-  const escanteiosCasa = Math.floor(Math.random() * 3 + 4);
-  const escanteiosFora = Math.floor(Math.random() * 3 + 4);
-
-  const cartoes = Math.floor(Math.random() * 3 + 3);
-
-  const jogador = jogadores[Math.floor(Math.random() * jogadores.length)];
-
-  return `
-⚽🔥 ${jogo[0]} 🆚 ${jogo[1]}
-
-📊 CHUTES:
-➡️ ${jogo[0]} +${chutesCasa}
-➡️ ${jogo[1]} +${chutesFora}
-
-📊 ESCANTEIOS:
-➡️ ${jogo[0]} +${escanteiosCasa}
-➡️ ${jogo[1]} +${escanteiosFora}
-
-📊 CARTÕES:
-➡️ Mais de ${cartoes}
-➡️ Ambas recebem cartão
-🟨 ${jogador} leva cartão
-`;
-}
-
-// 🎯 bilhete profissional
-function gerarBilhete() {
-  const jogo1 = escolherJogoUnico();
-  const jogo2 = escolherJogoUnico();
-
-  const odd1 = (Math.random() * 0.8 + 1.80).toFixed(2);
-  const odd2 = (Math.random() * 0.8 + 1.80).toFixed(2);
-  const total = (odd1 * odd2).toFixed(2);
-
-  const horario = gerarHorario();
-  const data = gerarData();
-
-  const entrada = ["3%", "4%", "5%"][Math.floor(Math.random() * 3)];
-  const confianca = ["ALTA 🔥", "MUITO ALTA 🚀"][Math.floor(Math.random() * 2)];
-
-  return `🚨💣🔥 BILHETE VIP EXPLOSIVO 🔥💣🚨
-
-💰💸💎 ENTRADA DE VALOR IDENTIFICADA 💎💸💰
-
-🎯📊 ODD TOTAL: ${total} 🚀🔥
-
-📅 ${data} às ${horario}
-⏱️ TEMPO REGULAMENTAR (90 MIN)
-
-━━━━━━━━━━━━━━━━━━
-
-${gerarJogo(jogo1)}
-📈 Odd: ${odd1}
-
-━━━━━━━━━━━━━━━━━━
-
-${gerarJogo(jogo2)}
-📈 Odd: ${odd2}
-
-━━━━━━━━━━━━━━━━━━
-
-💰💸 ENTRADA: ${entrada} da banca
-📊🧠 CONFIANÇA: ${confianca}
-
-🚨⏳ MERCADO OSCILANDO!
-🔥💣 ENTRE ANTES DA QUEDA DA ODD 🟢🏆`;
-}
-
-// 📤 envio
+// ================= TELEGRAM =================
 async function enviarMensagem(texto) {
   try {
-    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: texto
-      })
+    await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      chat_id: CHAT_ID,
+      text: texto,
     });
-
-    console.log("📤 ENVIADO");
-
   } catch (err) {
-    console.log("❌ ERRO:", err);
+    console.log("Erro ao enviar mensagem:", err.message);
   }
 }
 
-// 🔁 loop
-setInterval(() => {
-  console.log("📢 ENVIANDO BILHETE...");
-  enviarMensagem(gerarBilhete());
-}, 60000);
+// ================= BUSCAR JOGOS REAIS =================
+async function buscarJogosReais() {
+  try {
+    const { data } = await axios.get("https://www.sofascore.com/football", {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
 
-// 🚀 start
-console.log("🤖 BOT VIP ULTRA ATIVO");
+    const $ = cheerio.load(data);
+    let jogos = [];
+
+    $(".event__match").each((i, el) => {
+      const casa = $(el).find(".event__participant--home").text().trim();
+      const fora = $(el).find(".event__participant--away").text().trim();
+
+      if (casa && fora) {
+        jogos.push(`${casa} vs ${fora}`);
+      }
+    });
+
+    return jogos.slice(0, 2); // pega 2 jogos
+  } catch (err) {
+    console.log("Erro ao buscar jogos:", err.message);
+    return [];
+  }
+}
+
+// ================= GERAR BILHETE =================
+function gerarBilhete(jogo) {
+  return `🎯 BILHETE DO DIA
+
+⚽ ${jogo}
+
+✅ Seguro:
+- Over 1.5 gols
+- Over 7 escanteios
+
+⚖️ Médio:
+- Over 2.5 gols
+- Over 8.5 escanteios
+- Over 3.5 cartões
+
+💣 Arriscado:
+- Over 3.5 gols
+- Over 10 escanteios
+- Over 5.5 cartões`;
+}
+
+// ================= EXECUÇÃO =================
+async function rodarBot() {
+  console.log("BOT RODANDO...");
+
+  const jogos = await buscarJogosReais();
+
+  if (jogos.length === 0) {
+    await enviarMensagem("⚠️ Não encontrei jogos hoje.");
+    return;
+  }
+
+  for (let jogo of jogos) {
+    const mensagem = gerarBilhete(jogo);
+    await enviarMensagem(mensagem);
+  }
+}
+
+// roda a cada 10 minutos
+setInterval(rodarBot, 10 * 60 * 1000);
+
+// roda ao iniciar
+rodarBot();
